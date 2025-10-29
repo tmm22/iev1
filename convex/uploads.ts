@@ -1,4 +1,4 @@
-import { internalMutation } from "./_generated/server";
+import { internalMutation, internalQuery } from "./_generated/server";
 import { v } from "convex/values";
 
 export const recordUpload = internalMutation({
@@ -42,5 +42,18 @@ export const recordUpload = internalMutation({
       ...(args.fileSize !== undefined ? { fileSize: args.fileSize } : {}),
       ...(args.metadata !== undefined ? { metadata: args.metadata } : {})
     });
+  }
+});
+
+export const listUploads = internalQuery({
+  args: {
+    limit: v.optional(v.number())
+  },
+  handler: async (ctx, args) => {
+    const limit = args.limit ?? 25;
+    const uploads = await ctx.db.query("uploadLogs").collect();
+    return uploads
+      .sort((a, b) => b.createdAt - a.createdAt)
+      .slice(0, limit);
   }
 });

@@ -36,6 +36,10 @@ async function getClient() {
   return convexClient;
 }
 
+export async function getConvexClient() {
+  return getClient();
+}
+
 export async function recordUploadInConvex(record: UploadRecord) {
   const client = await getClient();
   if (!client) {
