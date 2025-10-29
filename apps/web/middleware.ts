@@ -16,15 +16,21 @@ export default clerkMiddleware(async (auth, req) => {
     return NextResponse.next();
   }
 
-  const authState = await auth();
+  try {
+    const authState = await auth();
 
-  if (isProtectedRoute(req) && !authState.userId) {
-    return authState.redirectToSignIn({ returnBackUrl: req.url });
+    if (isProtectedRoute(req) && !authState.userId) {
+      return authState.redirectToSignIn({ returnBackUrl: req.url });
+    }
+
+    if (!isPublicRoute(req) && !authState.userId) {
+      return authState.redirectToSignIn({ returnBackUrl: req.url });
+    }
+  } catch {
+    return NextResponse.next();
   }
 
-  if (!isPublicRoute(req) && !authState.userId) {
-    return authState.redirectToSignIn({ returnBackUrl: req.url });
-  }
+  return NextResponse.next();
 });
 
 export const config = {
