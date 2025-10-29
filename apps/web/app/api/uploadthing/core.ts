@@ -2,7 +2,6 @@ import { getAuth } from "@clerk/nextjs/server";
 import { createUploadthing, type FileRouter } from "uploadthing/next";
 import { UploadThingError } from "uploadthing/server";
 
-import { serverEnv } from "@/lib/env";
 import { recordUploadInConvex } from "@/lib/uploadthing/convexAdapter";
 
 const f = createUploadthing();
@@ -10,8 +9,8 @@ const f = createUploadthing();
 export const editorFileRouter = {
   "editor-assets": f({ image: { maxFileSize: "16MB", maxFileCount: 1 } })
     .middleware(async ({ req }) => {
-      if (!serverEnv.success) {
-        throw new UploadThingError("UploadThing environment variables missing");
+      if (!process.env.UPLOADTHING_TOKEN) {
+        throw new UploadThingError("UploadThing token missing");
       }
 
       try {
