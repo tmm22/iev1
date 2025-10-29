@@ -1,3 +1,4 @@
+import { NextResponse } from "next/server";
 import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server";
 
 const isProtectedRoute = createRouteMatcher(["/editor(.*)"]);
@@ -7,7 +8,14 @@ const isPublicRoute = createRouteMatcher([
   "/sign-up(.*)"
 ]);
 
+const clerkEnvMissing =
+  !process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY || !process.env.CLERK_SECRET_KEY;
+
 export default clerkMiddleware(async (auth, req) => {
+  if (clerkEnvMissing) {
+    return NextResponse.next();
+  }
+
   const authState = await auth();
 
   if (isProtectedRoute(req) && !authState.userId) {
