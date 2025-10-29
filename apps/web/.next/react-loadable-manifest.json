@@ -1,0 +1,12 @@
+{
+  "app/editor/page.tsx -> @/components/editor/EditorShell": {
+    "id": 6892,
+    "files": [
+      "static/chunks/545-75b5e776be7a182e.js",
+      "static/chunks/568-c3ebaf71494a959b.js",
+      "static/chunks/553-27be88856e4cbd1d.js",
+      "static/chunks/380.a350610b9161d277.js",
+      "static/chunks/630.c6141febdb4492c8.js"
+    ]
+  }
+}

@@ -8,14 +8,14 @@ const isPublicRoute = createRouteMatcher([
 ]);
 
 export default clerkMiddleware(async (auth, req) => {
-  if (isProtectedRoute(req)) {
-    await auth.protect();
-  } else if (!isPublicRoute(req)) {
-    // Default to signed-in experience for other routes; redirect if anonymous
-    const { isAuthenticated, redirectToSignIn } = await auth();
-    if (!isAuthenticated) {
-      return redirectToSignIn({ returnBackUrl: req.url });
-    }
+  const authState = await auth();
+
+  if (isProtectedRoute(req) && !authState.userId) {
+    return authState.redirectToSignIn({ returnBackUrl: req.url });
+  }
+
+  if (!isPublicRoute(req) && !authState.userId) {
+    return authState.redirectToSignIn({ returnBackUrl: req.url });
   }
 });
 

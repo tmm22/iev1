@@ -8,6 +8,7 @@ import {
   SignedIn,
   SignedOut,
   SignInButton,
+  SignOutButton,
   UserButton,
   useUser
 } from "@clerk/nextjs";
@@ -121,6 +122,11 @@ export default function EditorShell() {
                 {initials}
               </div>
               <UserButton appearance={{ elements: { avatarBox: "h-9 w-9" } }} />
+              <SignOutButton>
+                <button className="rounded-md border border-slate-800 bg-slate-900 px-3 py-2 text-xs text-slate-300 transition hover:bg-slate-800">
+                  Sign out
+                </button>
+              </SignOutButton>
             </div>
           </SignedIn>
         </div>
