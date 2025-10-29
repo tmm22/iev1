@@ -11,6 +11,7 @@
     "convex:dev": "pnpm --filter convex-backend dev"
   },
   "devDependencies": {
+    "next": "14.2.3",
     "typescript": "^5.4.5"
   }
 }
