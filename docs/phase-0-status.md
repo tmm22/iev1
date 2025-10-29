@@ -9,7 +9,7 @@ _Updated: 2025-10-29_
 - **AI prompt panel**: Form routes prompts to mock handler, writing entries into editor history to exercise undo/redo controls and demonstrate provider switch.
 - **Environment hygiene**: `.env.example` enumerates required variables; `lib/env.ts` performs runtime validation (logs warnings during Phase 0).
 - **Convex scaffold**: `convex/schema.ts` codifies initial data model (users, projects, canvases, assets, aiJobs). Package scripts ready for `convex dev` once credentials are linked.
-- **Clerk integration**: `@clerk/nextjs` wired into App Router (`ClerkProvider`, middleware, sign-in/up routes) with `/editor` protected by `auth.protect()`.
+- **Clerk integration**: `@clerk/nextjs` wired into App Router (`ClerkProvider`, middleware, sign-in/up routes) with `/editor` protection and deployment-safe middleware fallbacks when Clerk env keys are absent.
 
 ## Work Remaining to Exit Phase 0
 - Install dependencies (`pnpm install`) and verify `pnpm dev` + `pnpm convex:dev` run concurrently.
