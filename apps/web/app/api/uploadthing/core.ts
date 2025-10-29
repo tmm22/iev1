@@ -1,20 +1,21 @@
-import { auth } from "@clerk/nextjs/server";
+import { getAuth } from "@clerk/nextjs/server";
 import { createUploadthing, type FileRouter } from "uploadthing/next";
 import { UploadThingError } from "uploadthing/server";
 
 import { serverEnv } from "@/lib/env";
+import { recordUploadInConvex } from "@/lib/uploadthing/convexAdapter";
 
 const f = createUploadthing();
 
 export const editorFileRouter = {
   "editor-assets": f({ image: { maxFileSize: "16MB", maxFileCount: 1 } })
-    .middleware(async () => {
+    .middleware(async ({ req }) => {
       if (!serverEnv.success) {
         throw new UploadThingError("UploadThing environment variables missing");
       }
 
       try {
-        const { userId } = auth();
+        const { userId } = getAuth(req);
         if (!userId) {
           throw new UploadThingError("Unauthorized");
         }
@@ -28,6 +29,17 @@ export const editorFileRouter = {
     })
     .onUploadComplete(async (result) => {
       const { metadata, file } = result;
+
+      await recordUploadInConvex({
+        userId: metadata.userId,
+        fileKey: file.key,
+        fileName: file.name ?? file.key,
+        fileUrl: file.url,
+        fileType: file.type ?? null,
+        fileSize: file.size ?? null,
+        metadata: metadata ?? null
+      });
+
       return {
         uploadedBy: metadata.userId,
         url: file.url

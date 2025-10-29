@@ -19,7 +19,7 @@ See the full plan in [`ai-image-editor-plan.md`](../ai-image-editor-plan.md) for
 - ✅ Monorepo scaffold with Next.js App Router (`apps/web`) and Convex backend stub (`convex/`).
 - ✅ Phase 0 editor shell with AI prompt/asset panels and undo/redo state powered by Zustand.
 - ✅ Clerk authentication wired through middleware, sign-in/up routes, and session-aware UI.
-- ✅ UploadThing route live via `/api/uploadthing`; provide keys to enable real uploads.
+- ✅ UploadThing route live via `/api/uploadthing` with SSR hydration and Convex upload logging (supply UploadThing token + Convex URL).
 - 📌 Pending: Convex function implementation, AI provider integration, and production hardening.
 
 More details live inside [`docs/phase-0-status.md`](phase-0-status.md).
@@ -45,7 +45,7 @@ Consult [`docs/clerk-production-checklist.md`](clerk-production-checklist.md) be
 
 | Phase | Focus | Highlights |
 | --- | --- | --- |
-| Phase 0 | Foundations | Repository scaffold, auth wiring, mocked AI surface, live UploadThing bridge, documentation |
+| Phase 0 | Foundations | Repository scaffold, auth wiring, mocked AI surface, UploadThing SSR bridge + Convex logging, documentation |
 | Phase 1 | AI Generation | Integrate Gemini & OpenAI generation calls, job tracking, gallery |
 | Phase 2 | AI Editing | Masking tools, inpainting, streaming previews, prompt revision surfacing |
 | Phase 3 | Collaboration | Presence, commenting, activity feeds, Convex workflows |

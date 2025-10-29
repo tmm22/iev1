@@ -33,14 +33,14 @@ Key documents:
    ```
 4. Visit `http://localhost:3000` for the web shell and follow on-screen instructions.
 
-Note: UploadThing now runs against the live API via the App Router handler at `/api/uploadthing`. Ensure `UPLOADTHING_APP_ID` and `UPLOADTHING_SECRET` are present in your environment before starting the dev server. AI providers remain mocked. Clerk routes (`/sign-in`, `/sign-up`) use the default components with minimal styling; update the appearance config as needed.
+Note: UploadThing now runs against the live API via the App Router handler at `/api/uploadthing`. Ensure `UPLOADTHING_TOKEN` (v7 token from the UploadThing dashboard) and a Convex URL (`NEXT_PUBLIC_CONVEX_URL`) are present in your environment before starting the dev server. The root layout mounts UploadThing's `NextSSRPlugin` to hydrate client helpers without a loading flash, and completed uploads are mirrored into Convex via an internal `uploadLogs` record. AI providers remain mocked. Clerk routes (`/sign-in`, `/sign-up`) use the default components with minimal styling; update the appearance config as needed.
 
 ## Phase 0 Checklist
 
 - [ ] Next.js shell renders editor layout with placeholder canvas.
 - [ ] Convex dev server exposes dummy schema & auth utilities.
 - [ ] Clerk authentication configured (publishable + secret keys) and `/editor` gate enforced.
-- [x] UploadThing integration calls the live API (credentials required locally).
+- [x] UploadThing integration calls the live API with SSR hydration and Convex metadata persistence (credentials required locally).
 - [ ] Documentation & scripts kept current (this README, `.env.example`, package scripts).
 
 See `ai-image-editor-plan.md#9-implementation-roadmap` for next-phase milestones.

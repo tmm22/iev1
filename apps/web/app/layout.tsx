@@ -1,6 +1,11 @@
 import type { Metadata } from "next";
 import { ClerkProvider } from "@clerk/nextjs";
+import { NextSSRPlugin } from "@uploadthing/react/next-ssr-plugin";
+import { extractRouterConfig } from "uploadthing/server";
 import { Inter } from "next/font/google";
+
+import { editorFileRouter } from "@/app/api/uploadthing/core";
+
 import "./globals.css";
 
 const inter = Inter({ subsets: ["latin"] });
@@ -19,6 +24,7 @@ export default function RootLayout({
     <ClerkProvider>
       <html lang="en" className="h-full">
         <body className={`${inter.className} h-full bg-slate-950`}>
+          <NextSSRPlugin routerConfig={extractRouterConfig(editorFileRouter)} />
           {children}
         </body>
       </html>

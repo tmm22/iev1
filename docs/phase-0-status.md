@@ -5,7 +5,7 @@ _Updated: 2025-10-29_
 ## Completed Foundations
 - **Project structure**: pnpm monorepo with `apps/web` (Next.js) and `apps/convex-backend` (Convex CLI wrapper), plus shared TypeScript config.
 - **UI shell**: `/editor` route renders the Phase 0 editor layout (header, sidebar panels, placeholder canvas) with Zustand-backed undo/redo state and Clerk-powered session display.
-- **UploadThing integration**: `/api/uploadthing` proxies to UploadThing using live credentials; editor panel writes real asset URLs once keys are supplied.
+- **UploadThing integration**: `/api/uploadthing` proxies to UploadThing using live credentials, the root layout hydrates helpers via `NextSSRPlugin`, and uploads are mirrored into Convex `uploadLogs` when a deployment URL is configured.
 - **AI prompt panel**: Form routes prompts to mock handler, writing entries into editor history to exercise undo/redo controls and demonstrate provider switch.
 - **Environment hygiene**: `.env.example` enumerates required variables; `lib/env.ts` performs runtime validation (logs warnings during Phase 0).
 - **Convex scaffold**: `convex/schema.ts` codifies initial data model (users, projects, canvases, assets, aiJobs). Package scripts ready for `convex dev` once credentials are linked.
@@ -15,7 +15,7 @@ _Updated: 2025-10-29_
 - Install dependencies (`pnpm install`) and verify `pnpm dev` + `pnpm convex:dev` run concurrently.
 - Connect Clerk identities to Convex helper functions (`convex/auth` utilities) and persist user records.
 - Run `convex dev` to generate the `_generated` types and implement initial queries/mutations (`convex/model/*` helpers).
-- Extend UploadThing integration with Convex callbacks to persist asset metadata post-upload.
+- Promote UploadThing upload logs into canonical `assets` records once project linking + user provisioning is ready.
 - Add automated lint/typecheck Git hooks or CI pipeline once dependencies are installed.
 
 ## Suggested Next Actions (Phase 1 Prep)

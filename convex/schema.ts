@@ -51,5 +51,18 @@ export default defineSchema({
     createdAt: v.number(),
     updatedAt: v.number(),
     costUsd: v.optional(v.number())
-  }).index("by_project", ["projectId"])
+  }).index("by_project", ["projectId"]),
+  uploadLogs: defineTable({
+    userId: v.string(),
+    fileKey: v.string(),
+    fileName: v.string(),
+    fileUrl: v.string(),
+    fileType: v.optional(v.string()),
+    fileSize: v.optional(v.number()),
+    metadata: v.optional(v.any()),
+    createdAt: v.number(),
+    updatedAt: v.number()
+  })
+    .index("by_user", ["userId"])
+    .index("by_file_key", ["fileKey"])
 });
