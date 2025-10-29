@@ -41,7 +41,7 @@ export const editorFileRouter = {
         userId: metadata.userId,
         fileKey: file.key,
         fileName: file.name ?? file.key,
-        fileUrl: file.url,
+        fileUrl: file.ufsUrl ?? file.url,
         fileType: file.type ?? null,
         fileSize: file.size ?? null,
         metadata: metadata ?? null
@@ -49,7 +49,7 @@ export const editorFileRouter = {
 
       return {
         uploadedBy: metadata.userId,
-        url: file.url
+        url: file.ufsUrl ?? file.url
       };
     })
 } satisfies FileRouter;

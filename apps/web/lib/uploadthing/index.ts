@@ -19,10 +19,11 @@ export type EditorUploadResult = ClientUploadedFileData<EditorUploadOutput>;
 export function uploadResultToAsset(
   file: EditorUploadResult
 ): EditorAsset {
+  const assetUrl = file.ufsUrl ?? file.url;
   return {
     id: file.key,
     name: file.name ?? file.key,
-    url: file.url,
+    url: assetUrl,
     source: "upload"
   };
 }

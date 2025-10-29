@@ -12,20 +12,29 @@ type UploadRecord = {
 
 let convexClient: ConvexHttpClient | null = null;
 
+let loggedMissingConvexUrl = false;
+
 function getConvexUrl() {
-  return (
-    process.env.NEXT_PUBLIC_CONVEX_URL ??
-    process.env.CONVEX_URL ??
-    null
-  );
+  const url =
+    process.env.NEXT_PUBLIC_CONVEX_URL ?? process.env.CONVEX_URL ?? null;
+
+  if (!url && !loggedMissingConvexUrl) {
+    console.warn(
+      "[uploadthing] Convex URL missing; skipping upload metadata persistence. " +
+        "Set `NEXT_PUBLIC_CONVEX_URL` (recommended) or `CONVEX_URL` to your Convex deployment URL, " +
+        "e.g. https://your-project.convex.cloud. " +
+        `(current NEXT_PUBLIC_CONVEX_URL=${process.env.NEXT_PUBLIC_CONVEX_URL ?? "undefined"}, ` +
+        `CONVEX_URL=${process.env.CONVEX_URL ?? "undefined"})`
+    );
+    loggedMissingConvexUrl = true;
+  }
+
+  return url;
 }
 
 async function getClient() {
   const url = getConvexUrl();
   if (!url) {
-    console.warn(
-      "[uploadthing] Convex URL missing; skipping upload metadata persistence."
-    );
     return null;
   }
 
