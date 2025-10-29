@@ -1,0 +1,20 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "lib": ["DOM", "DOM.Iterable", "ES2022"],
+    "module": "ESNext",
+    "moduleResolution": "Node",
+    "forceConsistentCasingInFileNames": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "resolveJsonModule": true,
+    "strict": true,
+    "noEmit": true,
+    "allowJs": false,
+    "paths": {
+      "@/*": ["./apps/web/*"],
+      "@convex/*": ["./convex/*"]
+    }
+  },
+  "include": ["apps", "convex", "packages"]
+}

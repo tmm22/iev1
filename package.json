@@ -1,0 +1,16 @@
+{
+  "name": "ai-image-editor",
+  "version": "0.1.0",
+  "private": true,
+  "packageManager": "pnpm@9.0.0",
+  "scripts": {
+    "dev": "pnpm --filter web dev",
+    "build": "pnpm --filter web build",
+    "lint": "pnpm --filter web lint",
+    "typecheck": "pnpm --filter web typecheck",
+    "convex:dev": "pnpm --filter convex-backend dev"
+  },
+  "devDependencies": {
+    "typescript": "^5.4.5"
+  }
+}
