@@ -13,7 +13,15 @@ export const editorFileRouter = {
         throw new UploadThingError("UploadThing token missing");
       }
 
+      const clerkConfigured =
+        process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY &&
+        process.env.CLERK_SECRET_KEY;
+
       try {
+        if (!clerkConfigured) {
+          return { userId: "dev-placeholder" };
+        }
+
         const { userId } = getAuth(req);
         if (!userId) {
           throw new UploadThingError("Unauthorized");
