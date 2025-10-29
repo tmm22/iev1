@@ -33,14 +33,14 @@ Key documents:
    ```
 4. Visit `http://localhost:3000` for the web shell and follow on-screen instructions.
 
-Note: UploadThing + AI providers are currently mocked. Refer to `apps/web/lib/uploadthing/mockClient.ts` for the placeholder implementation. Clerk routes (`/sign-in`, `/sign-up`) use the default components with minimal styling; update the appearance config as needed.
+Note: UploadThing now runs against the live API via the App Router handler at `/api/uploadthing`. Ensure `UPLOADTHING_APP_ID` and `UPLOADTHING_SECRET` are present in your environment before starting the dev server. AI providers remain mocked. Clerk routes (`/sign-in`, `/sign-up`) use the default components with minimal styling; update the appearance config as needed.
 
 ## Phase 0 Checklist
 
 - [ ] Next.js shell renders editor layout with placeholder canvas.
 - [ ] Convex dev server exposes dummy schema & auth utilities.
 - [ ] Clerk authentication configured (publishable + secret keys) and `/editor` gate enforced.
-- [ ] UploadThing helpers return deterministic mocked URLs while infra is provisioned.
+- [x] UploadThing integration calls the live API (credentials required locally).
 - [ ] Documentation & scripts kept current (this README, `.env.example`, package scripts).
 
 See `ai-image-editor-plan.md#9-implementation-roadmap` for next-phase milestones.
