@@ -13,7 +13,8 @@ import {
   useUser
 } from "@clerk/nextjs";
 import { useEditorStore } from "@/lib/state/editorStore";
-import { CanvasPlaceholder } from "./canvas/CanvasPlaceholder";
+import dynamic from "next/dynamic";
+const CanvasKonva = dynamic(() => import("./canvas/CanvasKonva").then(m => m.CanvasKonva), { ssr: false });
 import { UploadPanel } from "./panels/UploadPanel";
 import { PromptPanel } from "./panels/PromptPanel";
 import { LayersPanel } from "./panels/LayersPanel";
@@ -184,7 +185,7 @@ export default function EditorShell() {
         </aside>
         <main className="flex flex-1 flex-col gap-6 overflow-hidden bg-slate-950 p-6">
           <section className="flex flex-1 overflow-hidden rounded-2xl border border-slate-900/60 bg-slate-900/40 shadow-inner">
-            <CanvasPlaceholder />
+            <CanvasKonva />
           </section>
         </main>
         <aside className="flex w-80 flex-col gap-6 border-l border-slate-900/60 bg-slate-950 p-5">
