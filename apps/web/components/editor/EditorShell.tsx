@@ -59,10 +59,12 @@ export default function EditorShell() {
     activeTool: state.activeTool,
     setActiveTool: state.setActiveTool
   }));
-  const { selectedLayerId, moveLayerUp, moveLayerDown } = useEditorStore((s) => ({
+  const { selectedLayerId, moveLayerUp, moveLayerDown, removeLayer, duplicateLayer } = useEditorStore((s) => ({
     selectedLayerId: s.selectedLayerId,
     moveLayerUp: s.moveLayerUp,
-    moveLayerDown: s.moveLayerDown
+    moveLayerDown: s.moveLayerDown,
+    removeLayer: s.removeLayer,
+    duplicateLayer: s.duplicateLayer
   }));
 
   // Panel layout state (persisted locally)
@@ -151,6 +153,38 @@ export default function EditorShell() {
         if (key === "]") moveLayerDown(selectedLayerId);
         return;
       }
+
+      // Duplicate layer: Cmd/Ctrl + D
+      if ((e.metaKey || e.ctrlKey) && key === "d") {
+        e.preventDefault();
+        if (selectedLayerId) duplicateLayer(selectedLayerId);
+        return;
+      }
+
+      // Delete layer: Delete or Backspace
+      if ((key === "delete" || key === "backspace") && selectedLayerId) {
+        // avoid when typing
+        e.preventDefault();
+        removeLayer(selectedLayerId);
+        return;
+      }
+
+      // Zoom controls
+      if ((e.metaKey || e.ctrlKey) && (key === "=" || key === "+")) {
+        e.preventDefault();
+        window.dispatchEvent(new CustomEvent("canvas:zoom", { detail: { type: "in" } }));
+        return;
+      }
+      if ((e.metaKey || e.ctrlKey) && key === "-") {
+        e.preventDefault();
+        window.dispatchEvent(new CustomEvent("canvas:zoom", { detail: { type: "out" } }));
+        return;
+      }
+      if ((e.metaKey || e.ctrlKey) && key === "0") {
+        e.preventDefault();
+        window.dispatchEvent(new Event("canvas:zoom:fit"));
+        return;
+      }
       const map: Record<string, import("@/lib/state/editorStore").EditorTool> = {
         v: "select",
         h: "hand",
@@ -167,7 +201,7 @@ export default function EditorShell() {
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [redo, undo, setActiveTool, selectedLayerId, moveLayerUp, moveLayerDown]);
+  }, [redo, undo, setActiveTool, selectedLayerId, moveLayerUp, moveLayerDown, removeLayer, duplicateLayer]);
 
   const initials = useMemo(() => {
     if (!user) {

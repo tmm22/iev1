@@ -63,6 +63,25 @@ export function CanvasKonva() {
     };
   }, []);
 
+  // Keyboard zoom controls via custom events from shell
+  useEffect(() => {
+    const onZoom = (e: Event) => {
+      const detail = (e as CustomEvent).detail as { type: "in" | "out" };
+      const factor = 1.1;
+      setScale((s) => (detail.type === "in" ? s * factor : s / factor));
+    };
+    const onFit = () => {
+      setScale(1);
+      setPosition({ x: 0, y: 0 });
+    };
+    window.addEventListener("canvas:zoom", onZoom as any);
+    window.addEventListener("canvas:zoom:fit", onFit);
+    return () => {
+      window.removeEventListener("canvas:zoom", onZoom as any);
+      window.removeEventListener("canvas:zoom:fit", onFit);
+    };
+  }, []);
+
   // Insert asset by URL when signaled by store
   useEffect(() => {
     if (!pendingUrl) return;
