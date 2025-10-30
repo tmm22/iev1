@@ -10,6 +10,26 @@ export function LayersPanel() {
   const addLayer = useEditorStore((s) => s.addLayer);
   const removeLayer = useEditorStore((s) => s.removeLayer);
   const toggleVis = useEditorStore((s) => s.toggleLayerVisibility);
+  const moveLayer = useEditorStore((s) => s.moveLayer);
+
+  const onDragStart = (e: React.DragEvent<HTMLDivElement>, fromIndex: number) => {
+    e.dataTransfer.setData("text/layer-index", String(fromIndex));
+    e.dataTransfer.effectAllowed = "move";
+  };
+
+  const onDragOver = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = "move";
+  };
+
+  const onDrop = (e: React.DragEvent<HTMLDivElement>, toIndex: number) => {
+    e.preventDefault();
+    const fromIndexStr = e.dataTransfer.getData("text/layer-index");
+    const fromIndex = Number(fromIndexStr);
+    if (Number.isFinite(fromIndex)) {
+      moveLayer(fromIndex, toIndex);
+    }
+  };
 
   return (
     <section className="flex flex-col gap-3 rounded-2xl border border-slate-900 bg-slate-950/70 p-4">
@@ -27,10 +47,14 @@ export function LayersPanel() {
         {layers.length === 0 ? (
           <p className="text-xs text-slate-500">No layers</p>
         ) : (
-          layers.map((layer) => (
+          layers.map((layer, idx) => (
             <div
               key={layer.id}
               onClick={() => selectLayer(layer.id)}
+              draggable
+              onDragStart={(e) => onDragStart(e, idx)}
+              onDragOver={onDragOver}
+              onDrop={(e) => onDrop(e, idx)}
               className={`flex items-center justify-between rounded-lg border px-3 py-2 text-sm transition ${
                 selected === layer.id
                   ? "border-brand/60 bg-brand/10 text-slate-100"
