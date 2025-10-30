@@ -19,8 +19,6 @@
     "typescript": "^5.4.5"
   },
   "lint-staged": {
-    "apps/web/**/*.{ts,tsx}": [
-      "pnpm --filter web lint --fix"
-    ]
+    "apps/web/**/*.{ts,tsx}": "pnpm --filter web lint"
   }
 }
