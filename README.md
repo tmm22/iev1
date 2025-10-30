@@ -28,7 +28,7 @@ Key documents:
    ```bash
    pnpm install
    ```
-2. Create a `.env` based on `.env.example` and populate secrets once available.
+2. Create a `.env` based on `.env.sample` and populate secrets once available.
 3. Start development servers:
    ```bash
    # Terminal 1 – Next.js
@@ -53,7 +53,7 @@ Note: UploadThing now runs against the live API via the App Router handler at `/
 - [ ] Convex dev server exposes dummy schema & auth utilities.
 - [ ] Clerk authentication configured (publishable + secret keys) and `/editor` gate enforced.
 - [x] UploadThing integration calls the live API with SSR hydration and Convex metadata persistence (credentials required locally).
-- [ ] Documentation & scripts kept current (this README, `.env.example`, package scripts).
+- [ ] Documentation & scripts kept current (this README, `.env.sample`, package scripts).
 
 See `ai-image-editor-plan.md#9-implementation-roadmap` for next-phase milestones.
 
