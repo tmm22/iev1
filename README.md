@@ -33,7 +33,14 @@ Key documents:
    ```
 4. Visit `http://localhost:3000` for the web shell and follow on-screen instructions.
 
-Note: UploadThing now runs against the live API via the App Router handler at `/api/uploadthing`. Ensure `UPLOADTHING_TOKEN` (v7 token from the UploadThing dashboard) and a Convex URL (`NEXT_PUBLIC_CONVEX_URL`) are present in your environment before starting the dev server. The root layout mounts UploadThing's `NextSSRPlugin` to hydrate client helpers without a loading flash, and completed uploads are mirrored into Convex via an internal `uploadLogs` record. AI providers remain mocked. Clerk routes (`/sign-in`, `/sign-up`) use the default components with minimal styling; update the appearance config as needed.
+Note: UploadThing now runs against the live API via the App Router handler at `/api/uploadthing`. Ensure `UPLOADTHING_TOKEN` (v7 token from the UploadThing dashboard) and a Convex URL (`NEXT_PUBLIC_CONVEX_URL`) are present in your environment before starting the dev server. The root layout mounts UploadThing's `NextSSRPlugin` to hydrate client helpers without a loading flash, and completed uploads are mirrored into Convex via an internal `uploadLogs` record. Uploads can be promoted to canonical `assets` with project linking using the `promoteUploadToAsset` mutation. AI providers remain mocked. Clerk routes (`/sign-in`, `/sign-up`) use the default components with minimal styling; update the appearance config as needed.
+
+**Phase 0 Complete!** All foundation items are implemented:
+- ✅ Convex backend with full schema, auth helpers, and CRUD operations
+- ✅ Model helpers following Convex best practices
+- ✅ Clerk authentication integration with user persistence
+- ✅ UploadThing integration with asset promotion
+- ✅ Pre-commit hooks for automated linting and type checking
 
 ## Phase 0 Checklist
 
