@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   ArrowUturnLeftIcon,
   ArrowUturnRightIcon
@@ -63,6 +63,67 @@ export default function EditorShell() {
     moveLayerUp: s.moveLayerUp,
     moveLayerDown: s.moveLayerDown
   }));
+
+  // Panel layout state (persisted locally)
+  const [leftCollapsed, setLeftCollapsed] = useState(false);
+  const [rightCollapsed, setRightCollapsed] = useState(false);
+  const [leftWidth, setLeftWidth] = useState<number>(320);
+  const [rightWidth, setRightWidth] = useState<number>(320);
+
+  useEffect(() => {
+    try {
+      const lc = localStorage.getItem("layout:leftCollapsed");
+      const rc = localStorage.getItem("layout:rightCollapsed");
+      const lw = localStorage.getItem("layout:leftWidth");
+      const rw = localStorage.getItem("layout:rightWidth");
+      if (lc != null) setLeftCollapsed(lc === "1");
+      if (rc != null) setRightCollapsed(rc === "1");
+      if (lw) setLeftWidth(Math.max(200, Math.min(500, parseInt(lw, 10))));
+      if (rw) setRightWidth(Math.max(200, Math.min(500, parseInt(rw, 10))));
+    } catch {}
+  }, []);
+  useEffect(() => {
+    try {
+      localStorage.setItem("layout:leftCollapsed", leftCollapsed ? "1" : "0");
+      localStorage.setItem("layout:rightCollapsed", rightCollapsed ? "1" : "0");
+      localStorage.setItem("layout:leftWidth", String(leftWidth));
+      localStorage.setItem("layout:rightWidth", String(rightWidth));
+    } catch {}
+  }, [leftCollapsed, rightCollapsed, leftWidth, rightWidth]);
+
+  // Resize handlers
+  useEffect(() => {
+    let resizing: null | { side: "left" | "right"; startX: number; startW: number } = null;
+    const onMove = (e: MouseEvent) => {
+      if (!resizing) return;
+      const dx = e.clientX - resizing.startX;
+      if (resizing.side === "left") {
+        setLeftWidth((w) => Math.max(200, Math.min(500, resizing!.startW + dx)));
+      } else {
+        setRightWidth((w) => Math.max(200, Math.min(500, resizing!.startW - dx)));
+      }
+    };
+    const onUp = () => {
+      resizing = null;
+      window.removeEventListener("mousemove", onMove);
+      window.removeEventListener("mouseup", onUp);
+    };
+    const start = (side: "left" | "right", startX: number) => {
+      resizing = {
+        side,
+        startX,
+        startW: side === "left" ? leftWidth : rightWidth
+      };
+      window.addEventListener("mousemove", onMove);
+      window.addEventListener("mouseup", onUp);
+    };
+    (window as any).startPanelResize = start;
+    return () => {
+      if ((window as any).startPanelResize) delete (window as any).startPanelResize;
+      window.removeEventListener("mousemove", onMove);
+      window.removeEventListener("mouseup", onUp);
+    };
+  }, [leftWidth, rightWidth]);
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -192,17 +253,61 @@ export default function EditorShell() {
         <aside className="flex w-14 flex-col items-center border-r border-slate-900/60 bg-slate-950">
           <ToolPalette />
         </aside>
-        <aside className="flex w-80 flex-col gap-6 border-r border-slate-900/60 bg-slate-950 p-5">
+        <aside
+          className="flex flex-col gap-6 border-r border-slate-900/60 bg-slate-950 p-5 transition-[width] duration-150"
+          style={{ width: leftCollapsed ? 0 : leftWidth }}
+        >
+          <div className="flex items-center justify-between">
+            <span className="text-xs text-slate-400">Left Panel</span>
+            <button
+              type="button"
+              onClick={() => setLeftCollapsed((v) => !v)}
+              className="rounded-md border border-slate-800 bg-slate-900 px-2 py-1 text-xs text-slate-300 hover:bg-slate-800"
+            >
+              {leftCollapsed ? "Show" : "Hide"}
+            </button>
+          </div>
           <PromptPanel />
           <UploadPanel />
           <LayersPanel />
         </aside>
+        {/* Left resizer */}
+        {!leftCollapsed && (
+          <div
+            role="separator"
+            aria-orientation="vertical"
+            onMouseDown={(e) => (window as any).startPanelResize?.("left", e.clientX)}
+            className="w-1 cursor-col-resize bg-slate-900/60 hover:bg-slate-800"
+          />
+        )}
         <main className="flex flex-1 flex-col gap-6 overflow-hidden bg-slate-950 p-6">
           <section className="flex flex-1 overflow-hidden rounded-2xl border border-slate-900/60 bg-slate-900/40 shadow-inner">
             <CanvasKonva />
           </section>
         </main>
-        <aside className="flex w-80 flex-col gap-6 border-l border-slate-900/60 bg-slate-950 p-5">
+        {/* Right resizer */}
+        {!rightCollapsed && (
+          <div
+            role="separator"
+            aria-orientation="vertical"
+            onMouseDown={(e) => (window as any).startPanelResize?.("right", e.clientX)}
+            className="w-1 cursor-col-resize bg-slate-900/60 hover:bg-slate-800"
+          />
+        )}
+        <aside
+          className="flex flex-col gap-6 border-l border-slate-900/60 bg-slate-950 p-5 transition-[width] duration-150"
+          style={{ width: rightCollapsed ? 0 : rightWidth }}
+        >
+          <div className="flex items-center justify-between">
+            <span className="text-xs text-slate-400">Properties</span>
+            <button
+              type="button"
+              onClick={() => setRightCollapsed((v) => !v)}
+              className="rounded-md border border-slate-800 bg-slate-900 px-2 py-1 text-xs text-slate-300 hover:bg-slate-800"
+            >
+              {rightCollapsed ? "Show" : "Hide"}
+            </button>
+          </div>
           <PropertiesPanel />
         </aside>
       </div>
