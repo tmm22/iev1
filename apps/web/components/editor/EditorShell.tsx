@@ -22,6 +22,9 @@ import { AssetsPanel } from "./panels/AssetsPanel";
 import { PropertiesPanel } from "./panels/PropertiesPanel";
 import { ToolPalette } from "./tools/ToolPalette";
 import { EditorShellSkeleton } from "./EditorShellSkeleton";
+import { useEnsureUser } from "@/lib/convex/useEnsureUser";
+import { useMutation } from "convex/react";
+import { api } from "@/lib/convex/clientApi";
 
 const NavButton = ({
   icon: Icon,
@@ -50,6 +53,9 @@ const NavButton = ({
 	);
 
 export default function EditorShell() {
+  // Ensure user in Convex (no-op if Convex not configured)
+  useEnsureUser();
+
   const { isLoaded, isSignedIn, user } = useUser();
   const { undo, redo, canUndo, canRedo, activeTool, setActiveTool } = useEditorStore((state) => ({
     undo: state.undo,
@@ -72,6 +78,52 @@ export default function EditorShell() {
   const [rightCollapsed, setRightCollapsed] = useState(false);
   const [leftWidth, setLeftWidth] = useState<number>(320);
   const [rightWidth, setRightWidth] = useState<number>(320);
+
+  // Convex mutations (optional)
+  const createProject = useMutation(api.projects.createProject);
+  const createCanvas = useMutation(api.canvases.createCanvas);
+  const createRevision = useMutation(api.canvases.createRevision);
+
+  async function saveSnapshot() {
+    const snapshot = await new Promise<any>((resolve) => {
+      const onExport = (e: Event) => {
+        window.removeEventListener("canvas:export", onExport as any);
+        resolve((e as CustomEvent).detail);
+      };
+      window.addEventListener("canvas:export", onExport as any, { once: true });
+      window.dispatchEvent(new Event("canvas:requestExport"));
+    });
+    try {
+      localStorage.setItem("canvas:lastSnapshot", JSON.stringify(snapshot));
+    } catch {}
+    try {
+      const projId = localStorage.getItem("canvas:projectId");
+      const canvasId = localStorage.getItem("canvas:canvasId");
+      let p = projId as any;
+      let c = canvasId as any;
+      if (!p) {
+        p = await createProject({ name: "My Project" });
+        localStorage.setItem("canvas:projectId", p);
+      }
+      if (!c) {
+        c = await createCanvas({ projectId: p, title: "Untitled" });
+        localStorage.setItem("canvas:canvasId", c);
+      }
+      await createRevision({ canvasId: c, snapshotKey: JSON.stringify(snapshot) });
+    } catch (e) {
+      // Convex may be unavailable; ignore
+      console.warn("Convex save skipped:", e);
+    }
+  }
+
+  function loadSnapshot() {
+    try {
+      const raw = localStorage.getItem("canvas:lastSnapshot");
+      if (!raw) return;
+      const snap = JSON.parse(raw);
+      window.dispatchEvent(new CustomEvent("canvas:import", { detail: snap }));
+    } catch {}
+  }
 
   useEffect(() => {
     try {
@@ -256,6 +308,20 @@ export default function EditorShell() {
               onClick={redo}
               disabled={!canRedo}
             />
+            <button
+              type="button"
+              onClick={() => void saveSnapshot()}
+              className="inline-flex items-center gap-2 rounded-md border border-emerald-700/40 bg-emerald-900/20 px-3 py-2 text-xs font-medium text-emerald-300 hover:bg-emerald-900/30"
+            >
+              Save
+            </button>
+            <button
+              type="button"
+              onClick={() => loadSnapshot()}
+              className="inline-flex items-center gap-2 rounded-md border border-sky-700/40 bg-sky-900/20 px-3 py-2 text-xs font-medium text-sky-300 hover:bg-sky-900/30"
+            >
+              Load
+            </button>
           </div>
         </div>
         <div className="flex items-center gap-3">
