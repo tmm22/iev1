@@ -19,6 +19,6 @@
     "typescript": "^5.4.5"
   },
   "lint-staged": {
-    "apps/web/**/*.{ts,tsx}": "pnpm --filter web lint"
+    "apps/web/**/*.{ts,tsx}": "sh -c 'cd apps/web && pnpm lint'"
   }
 }
