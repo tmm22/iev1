@@ -12,8 +12,10 @@ packages/           # Reserved for shared packages (UI, utils)
 ```
 
 Key documents:
-- `ai-image-editor-plan.md` – product & technical strategy.
-- `docs/` (future) – extended architecture notes as phases progress.
+- `ai-image-editor-plan.md` – product & technical strategy
+- `docs/phase-1-backend.md` – Phase 1 backend implementation
+- `docs/phase-0-status.md` – Foundation phase completion
+- `docs/` – extended architecture notes as phases progress
 
 ## Getting Started (Phase 0)
 
