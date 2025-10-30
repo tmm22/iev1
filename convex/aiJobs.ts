@@ -4,8 +4,9 @@
  */
 
 import { v } from "convex/values";
-import { mutation, query, action, internalAction, internalMutation } from "./_generated/server";
+import { mutation, query, action } from "./_generated/server";
 import { Doc, Id } from "./_generated/dataModel";
+import { internal } from "./_generated/api";
 import { requireUser } from "./auth";
 
 // Create a new AI job
@@ -210,40 +211,5 @@ export const getJobStats = query({
   },
 });
 
-// Internal exports
-export const internal = {
-  aiJobs: {
-    createJob,
-    getJob,
-  },
-  ai: {
-    gemini: {
-      generateImage: internalAction({
-        args: {
-          prompt: v.string(),
-          jobId: v.id("ai_jobs"),
-          userId: v.id("users"),
-          parameters: v.optional(v.any()),
-        },
-        handler: async () => {
-          // Placeholder - actual implementation in convex/ai/gemini.ts
-          throw new Error("Not implemented");
-        },
-      }),
-    },
-    openai: {
-      generateImage: internalAction({
-        args: {
-          prompt: v.string(),
-          jobId: v.id("ai_jobs"),
-          userId: v.id("users"),
-          parameters: v.optional(v.any()),
-        },
-        handler: async () => {
-          // Placeholder - actual implementation in convex/ai/openai.ts
-          throw new Error("Not implemented");
-        },
-      }),
-    },
-  },
-};
+// Note: internal API is imported from _generated/api
+// The actual implementations are in convex/ai/gemini.ts and convex/ai/openai.ts
