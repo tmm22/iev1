@@ -22,17 +22,15 @@
 
 import { useEffect, useState } from "react";
 import { useUser } from "@clerk/nextjs";
-// TODO: Import Convex client when enabled
-// import { useMutation } from "convex/react";
-// import { api } from "@/convex/_generated/api";
+import { useMutation } from "convex/react";
+import { api } from "@/lib/convex/clientApi";
 
 export function useEnsureUser() {
   const { isSignedIn, isLoaded } = useUser();
   const [isEnsuring, setIsEnsuring] = useState(false);
   const [error, setError] = useState<Error | null>(null);
   
-  // TODO: Uncomment when Convex is connected
-  // const ensureUser = useMutation(api.users.ensureUser);
+  const ensureUser = useMutation(api.users.ensureUser);
 
   useEffect(() => {
     async function ensureUserExists() {
@@ -44,9 +42,7 @@ export function useEnsureUser() {
       setError(null);
 
       try {
-        // TODO: Uncomment when Convex is connected
-        // await ensureUser();
-        console.log("[useEnsureUser] User ensured in Convex");
+        await ensureUser();
       } catch (err) {
         const error = err instanceof Error ? err : new Error("Failed to ensure user");
         console.error("[useEnsureUser] Error:", error);
@@ -57,7 +53,7 @@ export function useEnsureUser() {
     }
 
     void ensureUserExists();
-  }, [isLoaded, isSignedIn, isEnsuring]);
+  }, [isLoaded, isSignedIn, isEnsuring, ensureUser]);
 
   return {
     isLoading: !isLoaded || isEnsuring,

@@ -14,6 +14,7 @@
     "@headlessui/react": "^1.7.18",
     "@heroicons/react": "^2.1.5",
     "@uploadthing/react": "^7.2.0",
+    "convex": "^1.28.0",
     "konva": "^9.3.22",
     "nanoid": "^5.0.7",
     "next": "14.2.3",

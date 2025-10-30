@@ -21,7 +21,7 @@ export function CanvasKonva() {
   const [spaceDown, setSpaceDown] = useState(false);
   const [isDrawing, setIsDrawing] = useState(false);
   const [lines, setLines] = useState<DrawLine[]>([]);
-  const [images, setImages] = useState<Array<{ id: string; el: HTMLImageElement; x: number; y: number }>>([]);
+  const [images, setImages] = useState<Array<{ id: string; url: string; el: HTMLImageElement; x: number; y: number }>>([]);
 
   const activeTool = useEditorStore((s) => s.activeTool);
   const brushSize = useEditorStore((s) => s.toolProps.brushSize);
@@ -90,7 +90,7 @@ export function CanvasKonva() {
     img.onload = () => {
       setImages((prev) => [
         ...prev,
-        { id: `${Date.now()}-${Math.random()}`, el: img, x: size.width / 2 - img.width / 4, y: size.height / 2 - img.height / 4 }
+        { id: `${Date.now()}-${Math.random()}`, url: pendingUrl, el: img, x: size.width / 2 - img.width / 4, y: size.height / 2 - img.height / 4 }
       ]);
       clearPending();
     };
@@ -154,6 +154,41 @@ export function CanvasKonva() {
   };
 
   const endDraw = () => setIsDrawing(false);
+
+  // Export/import snapshot via window events
+  useEffect(() => {
+    const onRequest = () => {
+      const snapshot = {
+        version: 1,
+        size,
+        scale,
+        position,
+        lines,
+        images: images.map(({ url, x, y }) => ({ url, x, y }))
+      };
+      window.dispatchEvent(new CustomEvent("canvas:export", { detail: snapshot }));
+    };
+    const onImport = (e: Event) => {
+      const snap = (e as CustomEvent).detail as any;
+      setScale(snap.scale ?? 1);
+      setPosition(snap.position ?? { x: 0, y: 0 });
+      setLines(Array.isArray(snap.lines) ? snap.lines : []);
+      const imgs: Array<{ id: string; url: string; el: HTMLImageElement; x: number; y: number }> = [];
+      (snap.images ?? []).forEach((it: any) => {
+        const img = new window.Image();
+        img.crossOrigin = "anonymous";
+        img.onload = () => setImages((prev) => [...prev, { id: `${Date.now()}-${Math.random()}`, url: it.url, el: img, x: it.x, y: it.y }]);
+        img.src = it.url;
+      });
+      setImages(imgs);
+    };
+    window.addEventListener("canvas:requestExport", onRequest);
+    window.addEventListener("canvas:import", onImport as any);
+    return () => {
+      window.removeEventListener("canvas:requestExport", onRequest);
+      window.removeEventListener("canvas:import", onImport as any);
+    };
+  }, [size, scale, position, lines, images]);
 
   return (
     <div ref={containerRef} className="relative flex h-full w-full select-none items-stretch justify-stretch">

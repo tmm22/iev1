@@ -7,6 +7,7 @@ import { Inter } from "next/font/google";
 import { editorFileRouter } from "@/app/api/uploadthing/core";
 
 import "./globals.css";
+import { ClientProviders } from "@/components/ClientProviders";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -25,7 +26,7 @@ export default function RootLayout({
       <html lang="en" className="h-full">
         <body className={`${inter.className} h-full bg-slate-950`}>
           <NextSSRPlugin routerConfig={extractRouterConfig(editorFileRouter)} />
-          {children}
+          <ClientProviders>{children}</ClientProviders>
         </body>
       </html>
     </ClerkProvider>
