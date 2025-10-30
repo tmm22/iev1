@@ -42,6 +42,9 @@ type EditorActions = {
   setLayerOpacity: (layerId: string, opacity: number) => void;
   toggleLayerVisibility: (layerId: string) => void;
   renameLayer: (layerId: string, name: string) => void;
+  moveLayer: (fromIndex: number, toIndex: number) => void;
+  moveLayerUp: (layerId: string) => void;
+  moveLayerDown: (layerId: string) => void;
   setBrushSize: (size: number) => void;
   setPrimaryColor: (hex: string) => void;
 };
@@ -142,6 +145,34 @@ export const useEditorStore = create<EditorStore>((set) => ({
     set((state) => ({
       layers: state.layers.map((l) => (l.id === layerId ? { ...l, name } : l))
     })),
+  moveLayer: (fromIndex, toIndex) =>
+    set((state) => {
+      const layers = state.layers.slice();
+      const clampedFrom = Math.max(0, Math.min(layers.length - 1, fromIndex));
+      const clampedTo = Math.max(0, Math.min(layers.length - 1, toIndex));
+      if (clampedFrom === clampedTo) return {} as any;
+      const [moved] = layers.splice(clampedFrom, 1);
+      layers.splice(clampedTo, 0, moved);
+      return { layers };
+    }),
+  moveLayerUp: (layerId) =>
+    set((state) => {
+      const idx = state.layers.findIndex((l) => l.id === layerId);
+      if (idx <= 0) return {} as any;
+      const layers = state.layers.slice();
+      const [m] = layers.splice(idx, 1);
+      layers.splice(idx - 1, 0, m);
+      return { layers };
+    }),
+  moveLayerDown: (layerId) =>
+    set((state) => {
+      const idx = state.layers.findIndex((l) => l.id === layerId);
+      if (idx < 0 || idx >= state.layers.length - 1) return {} as any;
+      const layers = state.layers.slice();
+      const [m] = layers.splice(idx, 1);
+      layers.splice(idx + 1, 0, m);
+      return { layers };
+    }),
   setBrushSize: (size) =>
     set((state) => ({
       toolProps: { ...state.toolProps, brushSize: Math.max(1, Math.min(256, size)) }

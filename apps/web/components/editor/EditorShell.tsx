@@ -58,6 +58,11 @@ export default function EditorShell() {
     activeTool: state.activeTool,
     setActiveTool: state.setActiveTool
   }));
+  const { selectedLayerId, moveLayerUp, moveLayerDown } = useEditorStore((s) => ({
+    selectedLayerId: s.selectedLayerId,
+    moveLayerUp: s.moveLayerUp,
+    moveLayerDown: s.moveLayerDown
+  }));
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -75,6 +80,15 @@ export default function EditorShell() {
       const tag = (e.target as HTMLElement | null)?.tagName?.toLowerCase();
       if (tag === "input" || tag === "textarea") return;
       const key = e.key.toLowerCase();
+
+      // Layer reordering
+      if ((e.metaKey || e.ctrlKey) && (key === "[" || key === "]")) {
+        e.preventDefault();
+        if (!selectedLayerId) return;
+        if (key === "[") moveLayerUp(selectedLayerId);
+        if (key === "]") moveLayerDown(selectedLayerId);
+        return;
+      }
       const map: Record<string, import("@/lib/state/editorStore").EditorTool> = {
         v: "select",
         h: "hand",
@@ -91,7 +105,7 @@ export default function EditorShell() {
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [redo, undo, setActiveTool]);
+  }, [redo, undo, setActiveTool, selectedLayerId, moveLayerUp, moveLayerDown]);
 
   const initials = useMemo(() => {
     if (!user) {
