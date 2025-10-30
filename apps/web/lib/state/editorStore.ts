@@ -61,6 +61,7 @@ type EditorActions = {
   moveLayer: (fromIndex: number, toIndex: number) => void;
   moveLayerUp: (layerId: string) => void;
   moveLayerDown: (layerId: string) => void;
+  duplicateLayer: (layerId: string) => void;
   setBrushSize: (size: number) => void;
   setPrimaryColor: (hex: string) => void;
   queueInsertAssetUrl: (url: string) => void;
@@ -212,6 +213,16 @@ export const useEditorStore = create<EditorStore>((set) => ({
       const [m] = layers.splice(idx, 1);
       layers.splice(idx + 1, 0, m);
       return { layers };
+    }),
+  duplicateLayer: (layerId) =>
+    set((state) => {
+      const idx = state.layers.findIndex((l) => l.id === layerId);
+      if (idx < 0) return {} as any;
+      const layers = state.layers.slice();
+      const orig = layers[idx];
+      const dup = { ...orig, id: nanoid(), name: `${orig.name} copy` };
+      layers.splice(idx + 1, 0, dup);
+      return { layers, selectedLayerId: dup.id };
     }),
   setBrushSize: (size) =>
     set((state) => ({
