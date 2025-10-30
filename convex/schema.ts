@@ -41,17 +41,35 @@ export default defineSchema({
   })
     .index("by_project", ["projectId"])
     .index("by_user", ["createdBy"]),
-  aiJobs: defineTable({
+  ai_jobs: defineTable({
+    userId: v.id("users"),
     projectId: v.id("projects"),
-    requestedBy: v.id("users"),
-    provider: v.string(),
-    status: v.string(),
+    canvasId: v.optional(v.id("canvases")),
+    provider: v.union(v.literal("gemini"), v.literal("openai")),
+    type: v.union(
+      v.literal("generation"),
+      v.literal("edit"),
+      v.literal("multiTurn")
+    ),
     prompt: v.string(),
-    responseKey: v.optional(v.string()),
+    parameters: v.optional(v.string()),
+    parentJobId: v.optional(v.id("ai_jobs")),
+    status: v.union(
+      v.literal("pending"),
+      v.literal("processing"),
+      v.literal("completed"),
+      v.literal("failed")
+    ),
+    result: v.optional(v.string()),
+    error: v.optional(v.string()),
+    costEstimate: v.optional(v.number()),
     createdAt: v.number(),
     updatedAt: v.number(),
-    costUsd: v.optional(v.number())
-  }).index("by_project", ["projectId"]),
+    completedAt: v.optional(v.number())
+  })
+    .index("by_project", ["projectId"])
+    .index("by_user", ["userId"])
+    .index("by_status", ["status"]),
   uploadLogs: defineTable({
     userId: v.string(),
     fileKey: v.string(),
