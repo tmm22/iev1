@@ -1,6 +1,6 @@
 # Phase 1 – Frontend Plan
 
-Status: planned
+Status: in progress
 
 ## Scope
 Deliver a usable Phase 1 editor frontend built on the Phase 1 shell with basic canvas interactions, asset browsing, and AI generation UI wiring (mocked or real as backend matures).

@@ -4,6 +4,13 @@ All notable changes to this project will be documented in this file.
 
 ### 2025-10-30
 - Phase 1 shell merged (PR #4)
+### 2025-10-30
+- Frontend Phase 1 start
+  - Konva + react-konva scaffold added
+  - EditorShell now uses CanvasKonva (dynamic, client-only)
+  - Viewport controls: Space to pan (drag), wheel to zoom
+  - Tools: basic Brush/Eraser drawing on a temp draw layer
+
   - Tool palette with hotkeys (V/H/B/E/T/M/Z)
   - Layers panel (add/remove/select, show/hide)
   - Properties panel (brush size/color; layer name/opacity)
