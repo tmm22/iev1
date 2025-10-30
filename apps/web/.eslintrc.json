@@ -4,7 +4,13 @@
   "parserOptions": {
     "project": ["./tsconfig.json"]
   },
-  "rules": {
-    "@typescript-eslint/no-floating-promises": "error"
-  }
+  "rules": {},
+  "overrides": [
+    {
+      "files": ["**/*.ts", "**/*.tsx"],
+      "rules": {
+        "@typescript-eslint/no-floating-promises": "error"
+      }
+    }
+  ]
 }

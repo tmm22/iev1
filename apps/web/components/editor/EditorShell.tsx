@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { useMemo } from "react";
+import { useEffect, useMemo } from "react";
 import {
   ArrowUturnLeftIcon,
   ArrowUturnRightIcon
@@ -16,6 +16,9 @@ import { useEditorStore } from "@/lib/state/editorStore";
 import { CanvasPlaceholder } from "./canvas/CanvasPlaceholder";
 import { UploadPanel } from "./panels/UploadPanel";
 import { PromptPanel } from "./panels/PromptPanel";
+import { LayersPanel } from "./panels/LayersPanel";
+import { PropertiesPanel } from "./panels/PropertiesPanel";
+import { ToolPalette } from "./tools/ToolPalette";
 import { EditorShellSkeleton } from "./EditorShellSkeleton";
 
 const NavButton = ({
@@ -46,12 +49,48 @@ const NavButton = ({
 
 export default function EditorShell() {
   const { isLoaded, isSignedIn, user } = useUser();
-  const { undo, redo, canUndo, canRedo } = useEditorStore((state) => ({
+  const { undo, redo, canUndo, canRedo, activeTool, setActiveTool } = useEditorStore((state) => ({
     undo: state.undo,
     redo: state.redo,
     canUndo: state.historyIndex > 0,
-    canRedo: state.historyIndex < state.history.length - 1
+    canRedo: state.historyIndex < state.history.length - 1,
+    activeTool: state.activeTool,
+    setActiveTool: state.setActiveTool
   }));
+
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      // Undo / Redo
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "z") {
+        e.preventDefault();
+        if (e.shiftKey) {
+          redo();
+        } else {
+          undo();
+        }
+        return;
+      }
+      // Tool hotkeys when not typing in inputs
+      const tag = (e.target as HTMLElement | null)?.tagName?.toLowerCase();
+      if (tag === "input" || tag === "textarea") return;
+      const key = e.key.toLowerCase();
+      const map: Record<string, import("@/lib/state/editorStore").EditorTool> = {
+        v: "select",
+        h: "hand",
+        b: "brush",
+        e: "eraser",
+        t: "text",
+        m: "shape",
+        z: "zoom"
+      };
+      if (map[key]) {
+        e.preventDefault();
+        setActiveTool(map[key]);
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [redo, undo, setActiveTool]);
 
   const initials = useMemo(() => {
     if (!user) {
@@ -89,6 +128,9 @@ export default function EditorShell() {
           </Link>
           <span className="rounded-full border border-brand/40 bg-brand/10 px-3 py-1 text-xs uppercase tracking-widest text-brand">
             Phase 0 Shell
+          </span>
+          <span className="rounded-full border border-slate-800 bg-slate-900 px-3 py-1 text-xs text-slate-300">
+            Tool: {activeTool}
           </span>
           <div className="flex gap-2">
             <NavButton
@@ -132,15 +174,22 @@ export default function EditorShell() {
         </div>
       </header>
       <div className="flex flex-1 overflow-hidden">
+        <aside className="flex w-14 flex-col items-center border-r border-slate-900/60 bg-slate-950">
+          <ToolPalette />
+        </aside>
         <aside className="flex w-80 flex-col gap-6 border-r border-slate-900/60 bg-slate-950 p-5">
           <PromptPanel />
           <UploadPanel />
+          <LayersPanel />
         </aside>
         <main className="flex flex-1 flex-col gap-6 overflow-hidden bg-slate-950 p-6">
           <section className="flex flex-1 overflow-hidden rounded-2xl border border-slate-900/60 bg-slate-900/40 shadow-inner">
             <CanvasPlaceholder />
           </section>
         </main>
+        <aside className="flex w-80 flex-col gap-6 border-l border-slate-900/60 bg-slate-950 p-5">
+          <PropertiesPanel />
+        </aside>
       </div>
       <footer className="flex items-center justify-between border-t border-slate-900/60 bg-slate-950 px-6 py-3 text-xs text-slate-500">
         <span>
