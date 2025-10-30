@@ -1,4 +1,4 @@
-# AI Image Editor – Phase 0 Scaffold
+# AI Image Editor – Phase 1 Shell
 
 This repository hosts the experimental AI-powered image editor described in `ai-image-editor-plan.md`. The current focus is Phase 0: establishing the baseline developer environment so future phases (AI integrations, collaboration, production hardening) have a stable foundation.
 
@@ -16,6 +16,9 @@ Key documents:
 - `docs/phase-1-backend.md` – Phase 1 backend implementation
 - `docs/phase-0-status.md` – Foundation phase completion
 - `docs/` – extended architecture notes as phases progress
+  - `docs/architecture.md` – frontend shell layout + state
+  - `docs/phase-1-frontend-plan.md` – tasks + acceptance criteria
+  - `CHANGELOG.md` – merged milestones
 
 ## Getting Started (Phase 0)
 
