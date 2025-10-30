@@ -127,7 +127,7 @@ export default function EditorShell() {
             ← Back to overview
           </Link>
           <span className="rounded-full border border-brand/40 bg-brand/10 px-3 py-1 text-xs uppercase tracking-widest text-brand">
-            Phase 0 Shell
+            Phase 1 Shell
           </span>
           <span className="rounded-full border border-slate-800 bg-slate-900 px-3 py-1 text-xs text-slate-300">
             Tool: {activeTool}
@@ -193,8 +193,7 @@ export default function EditorShell() {
       </div>
       <footer className="flex items-center justify-between border-t border-slate-900/60 bg-slate-950 px-6 py-3 text-xs text-slate-500">
         <span>
-          AI Image Editor – Phase 0 scaffold. AI providers and uploads currently
-          operate in mock mode.
+          AI Image Editor – Phase 1 shell. AI providers and uploads currently operate in mock mode.
         </span>
         <span>
           Undo: {canUndo ? "available" : "n/a"} · Redo: {canRedo ? "available" : "n/a"}
