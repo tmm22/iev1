@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Stage, Layer, Line } from "react-konva";
+import { Stage, Layer, Line, Image as KonvaImage } from "react-konva";
 import type Konva from "konva";
 import { useEditorStore } from "@/lib/state/editorStore";
 
@@ -21,10 +21,13 @@ export function CanvasKonva() {
   const [spaceDown, setSpaceDown] = useState(false);
   const [isDrawing, setIsDrawing] = useState(false);
   const [lines, setLines] = useState<DrawLine[]>([]);
+  const [images, setImages] = useState<Array<{ id: string; el: HTMLImageElement; x: number; y: number }>>([]);
 
   const activeTool = useEditorStore((s) => s.activeTool);
   const brushSize = useEditorStore((s) => s.toolProps.brushSize);
   const primaryColor = useEditorStore((s) => s.toolProps.primaryColor);
+  const pendingUrl = useEditorStore((s) => s.pendingInsertAssetUrl);
+  const clearPending = useEditorStore((s) => (s as any).clearPendingInsert as () => void);
 
   // Fit to container
   useEffect(() => {
@@ -59,6 +62,23 @@ export function CanvasKonva() {
       window.removeEventListener("keyup", up);
     };
   }, []);
+
+  // Insert asset by URL when signaled by store
+  useEffect(() => {
+    if (!pendingUrl) return;
+    const img = new window.Image();
+    img.crossOrigin = "anonymous";
+    img.onload = () => {
+      setImages((prev) => [
+        ...prev,
+        { id: `${Date.now()}-${Math.random()}`, el: img, x: size.width / 2 - img.width / 4, y: size.height / 2 - img.height / 4 }
+      ]);
+      clearPending();
+    };
+    img.onerror = () => clearPending();
+    img.src = pendingUrl;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pendingUrl]);
 
   const onWheel = (e: any) => {
     e.evt.preventDefault();
@@ -153,6 +173,9 @@ export function CanvasKonva() {
               lineJoin="round"
               globalCompositeOperation={l.tool === "eraser" ? ("destination-out" as any) : undefined}
             />
+          ))}
+          {images.map((it) => (
+            <KonvaImage key={it.id} image={it.el} x={it.x} y={it.y} draggable />
           ))}
         </Layer>
       </Stage>

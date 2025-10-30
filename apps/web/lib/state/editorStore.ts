@@ -47,6 +47,8 @@ type EditorActions = {
   moveLayerDown: (layerId: string) => void;
   setBrushSize: (size: number) => void;
   setPrimaryColor: (hex: string) => void;
+  queueInsertAssetUrl: (url: string) => void;
+  clearPendingInsert: () => void;
 };
 
 type EditorStore = EditorHistoryState &
@@ -55,6 +57,7 @@ type EditorStore = EditorHistoryState &
     activeTool: EditorTool;
     layers: EditorLayer[];
     selectedLayerId: string | null;
+    pendingInsertAssetUrl: string | null;
     toolProps: {
       brushSize: number; // px
       primaryColor: string; // #RRGGBB
@@ -81,6 +84,7 @@ export const useEditorStore = create<EditorStore>((set) => ({
     }
   ],
   selectedLayerId: null,
+  pendingInsertAssetUrl: null,
   toolProps: {
     brushSize: 16,
     primaryColor: "#8b5cf6" // violet-500
@@ -112,6 +116,9 @@ export const useEditorStore = create<EditorStore>((set) => ({
     set((state) => ({
       assets: state.assets.filter((entry) => entry.id !== assetId)
     })),
+  // Signal to canvas that an asset should be inserted
+  queueInsertAssetUrl: (url: string) => set(() => ({ pendingInsertAssetUrl: url })),
+  clearPendingInsert: () => set(() => ({ pendingInsertAssetUrl: null })),
   setActiveTool: (tool) => set(() => ({ activeTool: tool })),
   addLayer: (name) =>
     set((state) => ({

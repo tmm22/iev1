@@ -18,6 +18,7 @@ const CanvasKonva = dynamic(() => import("./canvas/CanvasKonva").then(m => m.Can
 import { UploadPanel } from "./panels/UploadPanel";
 import { PromptPanel } from "./panels/PromptPanel";
 import { LayersPanel } from "./panels/LayersPanel";
+import { AssetsPanel } from "./panels/AssetsPanel";
 import { PropertiesPanel } from "./panels/PropertiesPanel";
 import { ToolPalette } from "./tools/ToolPalette";
 import { EditorShellSkeleton } from "./EditorShellSkeleton";
@@ -269,6 +270,7 @@ export default function EditorShell() {
           </div>
           <PromptPanel />
           <UploadPanel />
+          <AssetsPanel />
           <LayersPanel />
         </aside>
         {/* Left resizer */}
