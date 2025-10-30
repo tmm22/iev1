@@ -11,12 +11,17 @@ _Updated: 2025-10-29_
 - **Convex scaffold**: `convex/schema.ts` codifies initial data model (users, projects, canvases, assets, aiJobs). Package scripts ready for `convex dev` once credentials are linked.
 - **Clerk integration**: `@clerk/nextjs` wired into App Router (`ClerkProvider`, middleware, sign-in/up routes) with `/editor` protection and deployment-safe middleware fallbacks when Clerk env keys are absent.
 
-## Work Remaining to Exit Phase 0
-- Install dependencies (`pnpm install`) and verify `pnpm dev` + `pnpm convex:dev` run concurrently.
-- Connect Clerk identities to Convex helper functions (`convex/auth` utilities) and persist user records.
-- Run `convex dev` to generate the `_generated` types and implement initial queries/mutations (`convex/model/*` helpers).
-- Promote UploadThing upload logs into canonical `assets` records once project linking + user provisioning is ready.
-- Add automated lint/typecheck Git hooks or CI pipeline once dependencies are installed.
+## Completed in This Phase
+- ✅ **Convex Auth Helpers** (`convex/auth.ts`): Functions to retrieve/create users based on Clerk identity, with automatic persistence on first sign-in.
+- ✅ **Model Helpers** (`convex/model/`): Organized business logic for users, projects, canvases, and assets following Convex best practices.
+- ✅ **Public API Functions**: Full CRUD operations with authentication and authorization checks:
+  - `convex/users.ts`: User profile queries and mutations
+  - `convex/projects.ts`: Project management with ownership verification
+  - `convex/canvases.ts`: Canvas operations with revision tracking
+  - `convex/assets.ts`: Asset management with UploadThing promotion
+- ✅ **Upload Promotion**: `promoteUploadToAsset` mutation connects UploadThing logs to canonical assets with project/user linking.
+- ✅ **Automated Quality Checks**: Husky + lint-staged configured for pre-commit linting and type checking.
+- ✅ **Documentation Updates**: README and phase status documents reflect Phase 0 completion.
 
 ## Suggested Next Actions (Phase 1 Prep)
 1. Provision OpenAI + Google API keys and define per-environment cost budgets (per plan Section 10).
