@@ -10,6 +10,7 @@ All notable changes to this project will be documented in this file.
   - EditorShell now uses CanvasKonva (dynamic, client-only)
   - Viewport controls: Space to pan (drag), wheel to zoom
   - Tools: basic Brush/Eraser drawing on a temp draw layer
+  - Layers: drag-and-drop reordering + keyboard Cmd/Ctrl+[ and ]
 
   - Tool palette with hotkeys (V/H/B/E/T/M/Z)
   - Layers panel (add/remove/select, show/hide)
