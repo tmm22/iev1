@@ -8,6 +8,22 @@ export type EditorAsset = {
   source: "mock" | "upload" | "ai";
 };
 
+export type AiQuality = "standard" | "high";
+export type AiJobStatus = "queued" | "generating" | "succeeded" | "failed";
+export type AiPreview = { id: string; url: string };
+export type AiProvider = "auto" | "gemini" | "openai";
+export type AiJob = {
+  id: string;
+  prompt: string;
+  provider: AiProvider;
+  size: { width: number; height: number };
+  quality: AiQuality;
+  status: AiJobStatus;
+  previews: AiPreview[];
+  createdAt: number;
+  error?: string;
+};
+
 export type EditorTool =
   | "select"
   | "hand"
@@ -49,6 +65,9 @@ type EditorActions = {
   setPrimaryColor: (hex: string) => void;
   queueInsertAssetUrl: (url: string) => void;
   clearPendingInsert: () => void;
+  createAiJob: (job: AiJob) => void;
+  updateAiJob: (id: string, patch: Partial<AiJob>) => void;
+  addAiPreview: (id: string, preview: AiPreview) => void;
 };
 
 type EditorStore = EditorHistoryState &
@@ -58,6 +77,7 @@ type EditorStore = EditorHistoryState &
     layers: EditorLayer[];
     selectedLayerId: string | null;
     pendingInsertAssetUrl: string | null;
+    aiJobs: AiJob[];
     toolProps: {
       brushSize: number; // px
       primaryColor: string; // #RRGGBB
@@ -85,6 +105,7 @@ export const useEditorStore = create<EditorStore>((set) => ({
   ],
   selectedLayerId: null,
   pendingInsertAssetUrl: null,
+  aiJobs: [],
   toolProps: {
     brushSize: 16,
     primaryColor: "#8b5cf6" // violet-500
@@ -119,6 +140,18 @@ export const useEditorStore = create<EditorStore>((set) => ({
   // Signal to canvas that an asset should be inserted
   queueInsertAssetUrl: (url: string) => set(() => ({ pendingInsertAssetUrl: url })),
   clearPendingInsert: () => set(() => ({ pendingInsertAssetUrl: null })),
+  createAiJob: (job) =>
+    set((state) => ({ aiJobs: [job, ...state.aiJobs].slice(0, 50) })),
+  updateAiJob: (id, patch) =>
+    set((state) => ({
+      aiJobs: state.aiJobs.map((j) => (j.id === id ? { ...j, ...patch } : j))
+    })),
+  addAiPreview: (id, preview) =>
+    set((state) => ({
+      aiJobs: state.aiJobs.map((j) =>
+        j.id === id ? { ...j, previews: [...j.previews, preview] } : j
+      )
+    })),
   setActiveTool: (tool) => set(() => ({ activeTool: tool })),
   addLayer: (name) =>
     set((state) => ({
