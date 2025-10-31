@@ -38,6 +38,13 @@ export type EditorLayer = {
   name: string;
   visible: boolean;
   opacity: number; // 0..1
+  kind?: "image" | "group" | "shape" | "text" | "drawing";
+  imageUrl?: string; // when kind === 'image'
+  x?: number;
+  y?: number;
+  width?: number;
+  height?: number;
+  rotation?: number; // degrees
 };
 
 type EditorHistoryState = {
@@ -62,6 +69,11 @@ type EditorActions = {
   moveLayerUp: (layerId: string) => void;
   moveLayerDown: (layerId: string) => void;
   duplicateLayer: (layerId: string) => void;
+  setLayerTransform: (
+    layerId: string,
+    patch: Partial<Pick<EditorLayer, "x" | "y" | "width" | "height" | "rotation">>
+  ) => void;
+  nudgeLayer: (layerId: string, dx: number, dy: number) => void;
   setBrushSize: (size: number) => void;
   setPrimaryColor: (hex: string) => void;
   queueInsertAssetUrl: (url: string) => void;
@@ -224,6 +236,18 @@ export const useEditorStore = create<EditorStore>((set) => ({
       layers.splice(idx + 1, 0, dup);
       return { layers, selectedLayerId: dup.id };
     }),
+  setLayerTransform: (layerId, patch) =>
+    set((state) => ({
+      layers: state.layers.map((l) => (l.id === layerId ? { ...l, ...patch } : l))
+    })),
+  nudgeLayer: (layerId, dx, dy) =>
+    set((state) => ({
+      layers: state.layers.map((l) =>
+        l.id === layerId
+          ? { ...l, x: Math.round((l.x ?? 0) + dx), y: Math.round((l.y ?? 0) + dy) }
+          : l
+      )
+    })),
   setBrushSize: (size) =>
     set((state) => ({
       toolProps: { ...state.toolProps, brushSize: Math.max(1, Math.min(256, size)) }

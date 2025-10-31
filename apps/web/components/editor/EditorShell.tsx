@@ -62,12 +62,13 @@ export default function EditorShell() {
     activeTool: state.activeTool,
     setActiveTool: state.setActiveTool
   }));
-  const { selectedLayerId, moveLayerUp, moveLayerDown, removeLayer, duplicateLayer } = useEditorStore((s) => ({
+  const { selectedLayerId, moveLayerUp, moveLayerDown, removeLayer, duplicateLayer, nudgeLayer } = useEditorStore((s) => ({
     selectedLayerId: s.selectedLayerId,
     moveLayerUp: s.moveLayerUp,
     moveLayerDown: s.moveLayerDown,
     removeLayer: s.removeLayer,
-    duplicateLayer: s.duplicateLayer
+    duplicateLayer: s.duplicateLayer,
+    nudgeLayer: (s as any).nudgeLayer as (id: string, dx: number, dy: number) => void
   }));
 
   // Panel layout state (persisted locally)
@@ -75,6 +76,8 @@ export default function EditorShell() {
   const [rightCollapsed, setRightCollapsed] = useState(false);
   const [leftWidth, setLeftWidth] = useState<number>(320);
   const [rightWidth, setRightWidth] = useState<number>(320);
+  const [revisionsOpen, setRevisionsOpen] = useState(false);
+  const [revisions, setRevisions] = useState<Array<{ id: string; ts: number }>>([]);
 
   // Convex mutations (optional)
   const hasConvex = !!process.env.NEXT_PUBLIC_CONVEX_URL;
@@ -102,6 +105,15 @@ export default function EditorShell() {
     });
     try {
       localStorage.setItem("canvas:lastSnapshot", JSON.stringify(snapshot));
+      // maintain revisions list (ring buffer of 10)
+      const id = `${Date.now()}-${Math.random()}`;
+      const ts = Date.now();
+      const entry = { id, ts, snapshot };
+      const raw = localStorage.getItem("canvas:revisions");
+      const arr = raw ? (JSON.parse(raw) as any[]) : [];
+      const next = [entry, ...arr].slice(0, 10);
+      localStorage.setItem("canvas:revisions", JSON.stringify(next));
+      setRevisions(next.map((r) => ({ id: r.id, ts: r.ts })));
     } catch {}
     try {
       const projId = localStorage.getItem("canvas:projectId");
@@ -159,6 +171,9 @@ export default function EditorShell() {
       if (rc != null) setRightCollapsed(rc === "1");
       if (lw) setLeftWidth(Math.max(200, Math.min(500, parseInt(lw, 10))));
       if (rw) setRightWidth(Math.max(200, Math.min(500, parseInt(rw, 10))));
+      const revRaw = localStorage.getItem("canvas:revisions");
+      const arr = revRaw ? (JSON.parse(revRaw) as any[]) : [];
+      setRevisions(arr.map((r: any) => ({ id: r.id, ts: r.ts })));
     } catch {}
   }, []);
   useEffect(() => {
@@ -245,6 +260,22 @@ export default function EditorShell() {
         return;
       }
 
+      // Arrow key nudge
+      if (selectedLayerId && ["arrowup", "arrowdown", "arrowleft", "arrowright"].includes(key)) {
+        e.preventDefault();
+        const step = e.shiftKey ? 10 : 1;
+        const delta: Record<string, [number, number]> = {
+          arrowup: [0, -step],
+          arrowdown: [0, step],
+          arrowleft: [-step, 0],
+          arrowright: [step, 0]
+        };
+        const [dx, dy] = delta[key];
+        nudgeLayer(selectedLayerId, dx, dy);
+        window.dispatchEvent(new Event("canvas:changed"));
+        return;
+      }
+
       // Zoom controls
       if ((e.metaKey || e.ctrlKey) && (key === "=" || key === "+")) {
         e.preventDefault();
@@ -321,6 +352,51 @@ export default function EditorShell() {
             >
               Load
             </button>
+            <div className="relative">
+              <button
+                type="button"
+                onClick={() => setRevisionsOpen((v) => !v)}
+                className="inline-flex items-center gap-2 rounded-md border border-amber-700/40 bg-amber-900/20 px-3 py-2 text-xs font-medium text-amber-300 hover:bg-amber-900/30"
+              >
+                Revisions
+              </button>
+              {revisionsOpen && (
+                <div className="absolute z-10 mt-2 w-72 rounded-md border border-slate-800 bg-slate-900 p-2 shadow-lg">
+                  <div className="max-h-64 overflow-auto text-xs">
+                    {revisions.length === 0 ? (
+                      <div className="p-2 text-slate-500">No revisions yet.</div>
+                    ) : (
+                      revisions.map((r) => (
+                        <div key={r.id} className="flex items-center justify-between gap-2 border-b border-slate-800 px-2 py-2 last:border-0">
+                          <div className="flex flex-col">
+                            <span className="text-slate-200">{new Date(r.ts).toLocaleString()}</span>
+                            <span className="text-slate-500">{r.id.slice(0, 8)}</span>
+                          </div>
+                          <button
+                            type="button"
+                            className="rounded-md border border-slate-700 bg-slate-800 px-2 py-1 text-xs text-slate-200 hover:bg-slate-700"
+                            onClick={() => {
+                              try {
+                                const raw = localStorage.getItem("canvas:revisions");
+                                if (!raw) return;
+                                const arr = JSON.parse(raw) as any[];
+                                const match = arr.find((it) => it.id === r.id);
+                                if (match?.snapshot) {
+                                  window.dispatchEvent(new CustomEvent("canvas:import", { detail: match.snapshot }));
+                                  setRevisionsOpen(false);
+                                }
+                              } catch {}
+                            }}
+                          >
+                            Restore
+                          </button>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
         </div>
         <div className="flex items-center gap-3">
