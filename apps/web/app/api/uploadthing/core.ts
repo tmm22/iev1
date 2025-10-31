@@ -1,4 +1,3 @@
-import { getAuth } from "@clerk/nextjs/server";
 import { createUploadthing, type FileRouter } from "uploadthing/next";
 import { UploadThingError } from "uploadthing/server";
 
@@ -22,6 +21,7 @@ export const editorFileRouter = {
           return { userId: "dev-placeholder" };
         }
 
+        const { getAuth } = await import("@clerk/nextjs/server");
         const { userId } = getAuth(req);
         if (!userId) {
           throw new UploadThingError("Unauthorized");
