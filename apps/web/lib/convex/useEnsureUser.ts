@@ -35,7 +35,9 @@ export function useEnsureUser() {
   const [error, setError] = useState<Error | null>(null);
   
   // eslint-disable-next-line react-hooks/rules-of-hooks
-  const ensureUser = clerkEnabled ? useMutation(api.users.ensureUser) : ((async () => {}) as any);
+  const convexUsersApi = (api as any)?.users?.ensureUser;
+  // eslint-disable-next-line react-hooks/rules-of-hooks
+  const ensureUser = clerkEnabled && convexUsersApi ? useMutation((api as any).users.ensureUser) : ((async () => {}) as any);
 
   // eslint-disable-next-line react-hooks/rules-of-hooks
   useEffect(() => {
@@ -59,6 +61,7 @@ export function useEnsureUser() {
     }
 
     void ensureUserExists();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [clerkEnabled, isLoaded, isSignedIn, isEnsuring, ensureUser]);
 
   return {

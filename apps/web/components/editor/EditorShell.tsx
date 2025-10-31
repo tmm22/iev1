@@ -78,10 +78,11 @@ export default function EditorShell() {
 
   // Convex mutations (optional)
   const hasConvex = !!process.env.NEXT_PUBLIC_CONVEX_URL;
+  const convexApiAvailable = Boolean((api as any)?.projects?.createProject) && Boolean((api as any)?.canvases?.createCanvas) && Boolean((api as any)?.canvases?.createRevision);
   let createProject: any = async () => "";
   let createCanvas: any = async () => "";
   let createRevision: any = async () => "";
-  if (hasConvex) {
+  if (hasConvex && convexApiAvailable) {
     // eslint-disable-next-line react-hooks/rules-of-hooks
     createProject = useMutation((api as any).projects.createProject);
     // eslint-disable-next-line react-hooks/rules-of-hooks
@@ -120,7 +121,8 @@ export default function EditorShell() {
       // Convex may be unavailable; ignore
       console.warn("Convex save skipped:", e);
     }
-  }, [createProject, createCanvas, createRevision]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   function loadSnapshot() {
     try {
