@@ -32,7 +32,9 @@ export function CanvasKonva() {
   const layers = useEditorStore((s) => s.layers);
   const setLayerTransform = useEditorStore((s) => (s as any).setLayerTransform as (id: string, patch: any) => void);
   const selectLayer = useEditorStore((s) => s.selectLayer);
+  const toggleSelectLayer = useEditorStore((s) => (s as any).toggleSelectLayer as (id: string) => void);
   const selectedLayerId = useEditorStore((s) => s.selectedLayerId);
+  const selectedLayerIds = useEditorStore((s) => (s as any).selectedLayerIds as string[]);
 
   // Fit to container
   useEffect(() => {
@@ -299,10 +301,13 @@ export function CanvasKonva() {
                 rotation={l.rotation ?? 0}
                 draggable
                 onClick={(e) => {
-                  selectLayer(l.id);
+                  const ev = e.evt as MouseEvent;
+                  if (ev.metaKey || ev.ctrlKey || ev.shiftKey) toggleSelectLayer(l.id);
+                  else selectLayer(l.id);
                   const node = e.target.getStage()?.findOne(`#${l.id}`);
                   if (node) node.getStage()?.batchDraw();
-                  window.dispatchEvent(new CustomEvent("canvas:selection", { detail: { id: l.id, ...l } }));
+                  const ids = (useEditorStore.getState() as any).selectedLayerIds as string[];
+                  window.dispatchEvent(new CustomEvent("canvas:selection", { detail: { ids, last: l.id } }));
                 }}
                 onDragEnd={(e) => {
                   const pos = e.target.position();
@@ -324,13 +329,17 @@ export function CanvasKonva() {
                 onTap={() => selectLayer(l.id)}
               />
             ))}
-          {selectedLayerId ? (
+          {selectedLayerIds && selectedLayerIds.length > 0 ? (
             <Transformer
               nodes={(() => {
                 const stage = stageRef.current;
                 if (!stage) return [] as any[];
-                const node = stage.findOne(`#${selectedLayerId}`);
-                return node ? [node] : [];
+                const ids = selectedLayerIds;
+                if (!ids?.length) return [] as any[];
+                const nodes = ids
+                  .map((id) => stage.findOne(`#${id}`))
+                  .filter(Boolean) as any[];
+                return nodes;
               })()}
               rotateEnabled
               enabledAnchors={["top-left", "top-right", "bottom-left", "bottom-right"]}
@@ -346,7 +355,17 @@ export function CanvasKonva() {
 
       {/* HUD */}
       <div className="pointer-events-none absolute bottom-3 left-3 rounded-md border border-slate-800 bg-slate-900/80 px-2 py-1 text-[11px] text-slate-300">
-        {spaceDown ? "Pan (Space)" : activeTool === "brush" ? "Brush" : activeTool === "eraser" ? "Eraser" : selectedLayerId ? "Select" : "Navigate"}
+        {spaceDown
+          ? "Pan (Space)"
+          : activeTool === "brush"
+          ? "Brush"
+          : activeTool === "eraser"
+          ? "Eraser"
+          : selectedLayerIds && selectedLayerIds.length > 1
+          ? `Select (${selectedLayerIds.length})`
+          : selectedLayerId
+          ? "Select"
+          : "Navigate"}
         {"  ·  "}Zoom: wheel  ·  Brush size: {brushSize}
       </div>
     </div>

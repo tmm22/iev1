@@ -45,6 +45,7 @@ export type EditorLayer = {
   width?: number;
   height?: number;
   rotation?: number; // degrees
+  groupId?: string; // optional logical group membership
 };
 
 type EditorHistoryState = {
@@ -61,7 +62,11 @@ type EditorActions = {
   setActiveTool: (tool: EditorTool) => void;
   addLayer: (name?: string) => void;
   removeLayer: (layerId: string) => void;
-  selectLayer: (layerId: string | null) => void;
+  // Selection (single/multi)
+  selectLayer: (layerId: string | null) => void; // replaces selection
+  toggleSelectLayer: (layerId: string) => void; // add/remove from selection
+  clearSelection: () => void;
+  setSelection: (ids: string[]) => void;
   setLayerOpacity: (layerId: string, opacity: number) => void;
   toggleLayerVisibility: (layerId: string) => void;
   renameLayer: (layerId: string, name: string) => void;
@@ -74,6 +79,11 @@ type EditorActions = {
     patch: Partial<Pick<EditorLayer, "x" | "y" | "width" | "height" | "rotation">>
   ) => void;
   nudgeLayer: (layerId: string, dx: number, dy: number) => void;
+  // Multi-selection helpers
+  nudgeSelected: (dx: number, dy: number) => void;
+  removeSelected: () => void;
+  groupSelection: () => void; // assign a shared groupId to selected items
+  ungroupSelection: () => void; // clear groupId on selected items
   setBrushSize: (size: number) => void;
   setPrimaryColor: (hex: string) => void;
   queueInsertAssetUrl: (url: string) => void;
@@ -88,7 +98,8 @@ type EditorStore = EditorHistoryState &
     assets: EditorAsset[];
     activeTool: EditorTool;
     layers: EditorLayer[];
-    selectedLayerId: string | null;
+    selectedLayerId: string | null; // primary (last) selected for single-target actions
+    selectedLayerIds: string[]; // full multi-selection set
     pendingInsertAssetUrl: string | null;
     aiJobs: AiJob[];
     toolProps: {
@@ -117,6 +128,7 @@ export const useEditorStore = create<EditorStore>((set) => ({
     }
   ],
   selectedLayerId: null,
+  selectedLayerIds: [],
   pendingInsertAssetUrl: null,
   aiJobs: [],
   toolProps: {
@@ -179,9 +191,27 @@ export const useEditorStore = create<EditorStore>((set) => ({
     set((state) => ({
       layers: state.layers.filter((l) => l.id !== layerId),
       selectedLayerId:
-        state.selectedLayerId === layerId ? null : state.selectedLayerId
+        state.selectedLayerId === layerId ? null : state.selectedLayerId,
+      selectedLayerIds: state.selectedLayerIds.filter((id) => id !== layerId)
     })),
-  selectLayer: (layerId) => set(() => ({ selectedLayerId: layerId })),
+  selectLayer: (layerId) =>
+    set(() => ({
+      selectedLayerId: layerId,
+      selectedLayerIds: layerId ? [layerId] : []
+    })),
+  toggleSelectLayer: (layerId) =>
+    set((state) => {
+      const exists = state.selectedLayerIds.includes(layerId);
+      const next = exists
+        ? state.selectedLayerIds.filter((id) => id !== layerId)
+        : [...state.selectedLayerIds, layerId];
+      return {
+        selectedLayerIds: next,
+        selectedLayerId: next.length > 0 ? next[next.length - 1] : null
+      };
+    }),
+  clearSelection: () => set(() => ({ selectedLayerId: null, selectedLayerIds: [] })),
+  setSelection: (ids) => set(() => ({ selectedLayerIds: ids.slice(), selectedLayerId: ids[ids.length - 1] ?? null })),
   setLayerOpacity: (layerId, opacity) =>
     set((state) => ({
       layers: state.layers.map((l) =>
@@ -246,6 +276,36 @@ export const useEditorStore = create<EditorStore>((set) => ({
         l.id === layerId
           ? { ...l, x: Math.round((l.x ?? 0) + dx), y: Math.round((l.y ?? 0) + dy) }
           : l
+      )
+    })),
+  nudgeSelected: (dx, dy) =>
+    set((state) => ({
+      layers: state.layers.map((l) =>
+        state.selectedLayerIds.includes(l.id)
+          ? { ...l, x: Math.round((l.x ?? 0) + dx), y: Math.round((l.y ?? 0) + dy) }
+          : l
+      )
+    })),
+  removeSelected: () =>
+    set((state) => ({
+      layers: state.layers.filter((l) => !state.selectedLayerIds.includes(l.id)),
+      selectedLayerId: null,
+      selectedLayerIds: []
+    })),
+  groupSelection: () =>
+    set((state) => {
+      if (state.selectedLayerIds.length < 2) return {} as any;
+      const gid = nanoid();
+      return {
+        layers: state.layers.map((l) =>
+          state.selectedLayerIds.includes(l.id) ? { ...l, groupId: gid } : l
+        )
+      };
+    }),
+  ungroupSelection: () =>
+    set((state) => ({
+      layers: state.layers.map((l) =>
+        state.selectedLayerIds.includes(l.id) ? { ...l, groupId: undefined } : l
       )
     })),
   setBrushSize: (size) =>

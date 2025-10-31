@@ -62,13 +62,18 @@ export default function EditorShell() {
     activeTool: state.activeTool,
     setActiveTool: state.setActiveTool
   }));
-  const { selectedLayerId, moveLayerUp, moveLayerDown, removeLayer, duplicateLayer, nudgeLayer } = useEditorStore((s) => ({
+  const { selectedLayerId, selectedLayerIds, moveLayerUp, moveLayerDown, removeLayer, removeSelected, duplicateLayer, nudgeLayer, nudgeSelected, groupSelection, ungroupSelection } = useEditorStore((s) => ({
     selectedLayerId: s.selectedLayerId,
+    selectedLayerIds: (s as any).selectedLayerIds as string[],
     moveLayerUp: s.moveLayerUp,
     moveLayerDown: s.moveLayerDown,
     removeLayer: s.removeLayer,
+    removeSelected: (s as any).removeSelected as () => void,
     duplicateLayer: s.duplicateLayer,
-    nudgeLayer: (s as any).nudgeLayer as (id: string, dx: number, dy: number) => void
+    nudgeLayer: (s as any).nudgeLayer as (id: string, dx: number, dy: number) => void,
+    nudgeSelected: (s as any).nudgeSelected as (dx: number, dy: number) => void,
+    groupSelection: (s as any).groupSelection as () => void,
+    ungroupSelection: (s as any).ungroupSelection as () => void
   }));
 
   // Panel layout state (persisted locally)
@@ -245,23 +250,35 @@ export default function EditorShell() {
         return;
       }
 
-      // Duplicate layer: Cmd/Ctrl + D
+      // Group / Ungroup
+      if ((e.metaKey || e.ctrlKey) && key === "g") {
+        e.preventDefault();
+        if (e.shiftKey) ungroupSelection();
+        else groupSelection();
+        return;
+      }
+
+      // Duplicate layer: Cmd/Ctrl + D (single only)
       if ((e.metaKey || e.ctrlKey) && key === "d") {
         e.preventDefault();
         if (selectedLayerId) duplicateLayer(selectedLayerId);
         return;
       }
 
-      // Delete layer: Delete or Backspace
-      if ((key === "delete" || key === "backspace") && selectedLayerId) {
+      // Delete layer(s): Delete or Backspace
+      if (key === "delete" || key === "backspace") {
         // avoid when typing
         e.preventDefault();
-        removeLayer(selectedLayerId);
+        if (selectedLayerIds && selectedLayerIds.length > 1) {
+          removeSelected();
+        } else if (selectedLayerId) {
+          removeLayer(selectedLayerId);
+        }
         return;
       }
 
       // Arrow key nudge
-      if (selectedLayerId && ["arrowup", "arrowdown", "arrowleft", "arrowright"].includes(key)) {
+      if (["arrowup", "arrowdown", "arrowleft", "arrowright"].includes(key)) {
         e.preventDefault();
         const step = e.shiftKey ? 10 : 1;
         const delta: Record<string, [number, number]> = {
@@ -271,7 +288,8 @@ export default function EditorShell() {
           arrowright: [step, 0]
         };
         const [dx, dy] = delta[key];
-        nudgeLayer(selectedLayerId, dx, dy);
+        if (selectedLayerIds && selectedLayerIds.length > 1) nudgeSelected(dx, dy);
+        else if (selectedLayerId) nudgeLayer(selectedLayerId, dx, dy);
         window.dispatchEvent(new Event("canvas:changed"));
         return;
       }
