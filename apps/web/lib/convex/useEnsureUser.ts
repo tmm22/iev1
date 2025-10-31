@@ -26,15 +26,21 @@ import { useMutation } from "convex/react";
 import { api } from "@/lib/convex/clientApi";
 
 export function useEnsureUser() {
-  const { isSignedIn, isLoaded } = useUser();
+  const clerkEnabled = !!process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY;
+  // eslint-disable-next-line react-hooks/rules-of-hooks
+  const { isSignedIn, isLoaded } = clerkEnabled ? useUser() : ({ isSignedIn: false, isLoaded: true } as any);
+  // eslint-disable-next-line react-hooks/rules-of-hooks
   const [isEnsuring, setIsEnsuring] = useState(false);
+  // eslint-disable-next-line react-hooks/rules-of-hooks
   const [error, setError] = useState<Error | null>(null);
   
-  const ensureUser = useMutation(api.users.ensureUser);
+  // eslint-disable-next-line react-hooks/rules-of-hooks
+  const ensureUser = clerkEnabled ? useMutation(api.users.ensureUser) : ((async () => {}) as any);
 
+  // eslint-disable-next-line react-hooks/rules-of-hooks
   useEffect(() => {
     async function ensureUserExists() {
-      if (!isLoaded || !isSignedIn || isEnsuring) {
+      if (!clerkEnabled || !isLoaded || !isSignedIn || isEnsuring) {
         return;
       }
 
@@ -53,10 +59,10 @@ export function useEnsureUser() {
     }
 
     void ensureUserExists();
-  }, [isLoaded, isSignedIn, isEnsuring, ensureUser]);
+  }, [clerkEnabled, isLoaded, isSignedIn, isEnsuring, ensureUser]);
 
   return {
-    isLoading: !isLoaded || isEnsuring,
+    isLoading: (clerkEnabled && !isLoaded) || isEnsuring,
     error
   };
 }

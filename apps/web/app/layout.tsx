@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import { ClerkProvider } from "@clerk/nextjs";
 import { NextSSRPlugin } from "@uploadthing/react/next-ssr-plugin";
 import { extractRouterConfig } from "uploadthing/server";
 import { Inter } from "next/font/google";
@@ -16,19 +15,21 @@ export const metadata: Metadata = {
   description: "Phase 0 scaffold for the AI-enhanced image editor."
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children
 }: {
   children: React.ReactNode;
 }) {
-  return (
-    <ClerkProvider>
-      <html lang="en" className="h-full">
-        <body className={`${inter.className} h-full bg-slate-950`}>
-          <NextSSRPlugin routerConfig={extractRouterConfig(editorFileRouter)} />
-          <ClientProviders>{children}</ClientProviders>
-        </body>
-      </html>
-    </ClerkProvider>
+  const hasClerk = !!process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY;
+  const Shell = (
+    <html lang="en" className="h-full">
+      <body className={`${inter.className} h-full bg-slate-950`}>
+        <NextSSRPlugin routerConfig={extractRouterConfig(editorFileRouter)} />
+        <ClientProviders>{children}</ClientProviders>
+      </body>
+    </html>
   );
+  if (!hasClerk) return Shell;
+  const { ClerkProvider } = await import("@clerk/nextjs");
+  return <ClerkProvider>{Shell}</ClerkProvider>;
 }

@@ -1,37 +1,33 @@
 import { NextResponse } from "next/server";
-import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server";
-
-const isProtectedRoute = createRouteMatcher(["/editor(.*)"]);
-const isPublicRoute = createRouteMatcher([
-  "/",
-  "/sign-in(.*)",
-  "/sign-up(.*)"
-]);
 
 const clerkEnvMissing =
   !process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY || !process.env.CLERK_SECRET_KEY;
 
-export default clerkMiddleware(async (auth, req) => {
-  if (clerkEnvMissing) {
-    return NextResponse.next();
-  }
+export default async function middleware(req: any) {
+  if (clerkEnvMissing) return NextResponse.next();
 
-  try {
-    const authState = await auth();
+  const { clerkMiddleware, createRouteMatcher } = await import("@clerk/nextjs/server");
+  const isProtectedRoute = createRouteMatcher(["/editor(.*)"]);
+  const isPublicRoute = createRouteMatcher(["/", "/sign-in(.*)", "/sign-up(.*)"]);
 
-    if (isProtectedRoute(req) && !authState.userId) {
-      return authState.redirectToSignIn({ returnBackUrl: req.url });
+  return (clerkMiddleware(async (auth, reqInner) => {
+    try {
+      const authState = await auth();
+
+      if (isProtectedRoute(reqInner) && !authState.userId) {
+        return authState.redirectToSignIn({ returnBackUrl: reqInner.url });
+      }
+
+      if (!isPublicRoute(reqInner) && !authState.userId) {
+        return authState.redirectToSignIn({ returnBackUrl: reqInner.url });
+      }
+    } catch {
+      return NextResponse.next();
     }
 
-    if (!isPublicRoute(req) && !authState.userId) {
-      return authState.redirectToSignIn({ returnBackUrl: req.url });
-    }
-  } catch {
     return NextResponse.next();
-  }
-
-  return NextResponse.next();
-});
+  }) as any)(req);
+}
 
 export const config = {
   matcher: [

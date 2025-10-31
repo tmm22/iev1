@@ -1,17 +1,9 @@
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, useCallback } from "react";
 import {
   ArrowUturnLeftIcon,
   ArrowUturnRightIcon
 } from "@heroicons/react/24/outline";
-import {
-  SignedIn,
-  SignedOut,
-  SignInButton,
-  SignOutButton,
-  UserButton,
-  useUser
-} from "@clerk/nextjs";
 import { useEditorStore } from "@/lib/state/editorStore";
 import dynamic from "next/dynamic";
 const CanvasKonva = dynamic(() => import("./canvas/CanvasKonva").then(m => m.CanvasKonva), { ssr: false });
@@ -23,6 +15,7 @@ import { PropertiesPanel } from "./panels/PropertiesPanel";
 import { ToolPalette } from "./tools/ToolPalette";
 import { EditorShellSkeleton } from "./EditorShellSkeleton";
 import { useEnsureUser } from "@/lib/convex/useEnsureUser";
+import React from "react";
 import { useMutation } from "convex/react";
 import { api } from "@/lib/convex/clientApi";
 
@@ -52,11 +45,15 @@ const NavButton = ({
   </button>
 	);
 
+const AuthControls = dynamic(
+  () => import("./auth/AuthControlsClerk").then(m => m.AuthControlsClerk),
+  { ssr: false, loading: () => null }
+);
+
 export default function EditorShell() {
   // Ensure user in Convex (no-op if Convex not configured)
   useEnsureUser();
 
-  const { isLoaded, isSignedIn, user } = useUser();
   const { undo, redo, canUndo, canRedo, activeTool, setActiveTool } = useEditorStore((state) => ({
     undo: state.undo,
     redo: state.redo,
@@ -80,11 +77,20 @@ export default function EditorShell() {
   const [rightWidth, setRightWidth] = useState<number>(320);
 
   // Convex mutations (optional)
-  const createProject = useMutation(api.projects.createProject);
-  const createCanvas = useMutation(api.canvases.createCanvas);
-  const createRevision = useMutation(api.canvases.createRevision);
+  const hasConvex = !!process.env.NEXT_PUBLIC_CONVEX_URL;
+  let createProject: any = async () => "";
+  let createCanvas: any = async () => "";
+  let createRevision: any = async () => "";
+  if (hasConvex) {
+    // eslint-disable-next-line react-hooks/rules-of-hooks
+    createProject = useMutation((api as any).projects.createProject);
+    // eslint-disable-next-line react-hooks/rules-of-hooks
+    createCanvas = useMutation((api as any).canvases.createCanvas);
+    // eslint-disable-next-line react-hooks/rules-of-hooks
+    createRevision = useMutation((api as any).canvases.createRevision);
+  }
 
-  async function saveSnapshot() {
+  const saveSnapshot = useCallback(async () => {
     const snapshot = await new Promise<any>((resolve) => {
       const onExport = (e: Event) => {
         window.removeEventListener("canvas:export", onExport as any);
@@ -114,7 +120,7 @@ export default function EditorShell() {
       // Convex may be unavailable; ignore
       console.warn("Convex save skipped:", e);
     }
-  }
+  }, [createProject, createCanvas, createRevision]);
 
   function loadSnapshot() {
     try {
@@ -124,6 +130,22 @@ export default function EditorShell() {
       window.dispatchEvent(new CustomEvent("canvas:import", { detail: snap }));
     } catch {}
   }
+
+  // Autosave on canvas changes (debounced)
+  useEffect(() => {
+    let t: any = null;
+    const handler = () => {
+      if (t) clearTimeout(t);
+      t = setTimeout(() => {
+        void saveSnapshot();
+      }, 1200);
+    };
+    window.addEventListener("canvas:changed", handler);
+    return () => {
+      window.removeEventListener("canvas:changed", handler);
+      if (t) clearTimeout(t);
+    };
+  }, [saveSnapshot]);
 
   useEffect(() => {
     try {
@@ -255,32 +277,7 @@ export default function EditorShell() {
     return () => window.removeEventListener("keydown", onKey);
   }, [redo, undo, setActiveTool, selectedLayerId, moveLayerUp, moveLayerDown, removeLayer, duplicateLayer]);
 
-  const initials = useMemo(() => {
-    if (!user) {
-      return "AI";
-    }
-    const base =
-      user.fullName ??
-      user.username ??
-      [user.firstName, user.lastName].filter(Boolean).join(" ") ??
-      user.id;
-    return base
-      .split(" ")
-      .filter(Boolean)
-      .map((chunk) => chunk[0] ?? "")
-      .join("")
-      .slice(0, 2)
-      .toUpperCase();
-  }, [user]);
-
-  const email =
-    user?.primaryEmailAddress?.emailAddress ??
-    user?.emailAddresses?.[0]?.emailAddress ??
-    "session@pending.dev";
-
-  if (!isLoaded) {
-    return <EditorShellSkeleton />;
-  }
+  const hasClerk = !!process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY;
 
   return (
     <div className="flex min-h-screen flex-col bg-slate-950 text-slate-100">
@@ -325,29 +322,13 @@ export default function EditorShell() {
           </div>
         </div>
         <div className="flex items-center gap-3">
-          <SignedOut>
-            <SignInButton mode="modal">
-              <button className="rounded-md border border-brand/40 bg-brand/10 px-3 py-2 text-xs font-medium text-brand transition hover:bg-brand/20">
-                Sign in to continue
-              </button>
-            </SignInButton>
-          </SignedOut>
-          <SignedIn>
+          {hasClerk ? (
+            <AuthControls />
+          ) : (
             <span className="rounded-full border border-slate-800 bg-slate-900 px-3 py-1 text-xs text-slate-300">
-              {isSignedIn ? `Session: ${email}` : "Authenticating…"}
+              Guest session
             </span>
-            <div className="flex h-9 items-center gap-3">
-              <div className="flex h-9 w-9 items-center justify-center rounded-full border border-slate-800 bg-slate-900 font-semibold text-slate-200">
-                {initials}
-              </div>
-              <UserButton appearance={{ elements: { avatarBox: "h-9 w-9" } }} />
-              <SignOutButton>
-                <button className="rounded-md border border-slate-800 bg-slate-900 px-3 py-2 text-xs text-slate-300 transition hover:bg-slate-800">
-                  Sign out
-                </button>
-              </SignOutButton>
-            </div>
-          </SignedIn>
+          )}
         </div>
       </header>
       <div className="flex flex-1 overflow-hidden">
