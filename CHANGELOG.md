@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file.
 
+### 2025-10-31
+- PR #16 merged: Selection tool + transforms, numeric properties, local revisions UI
+  - Konva Transformer for resize/rotate; click-to-select, drag-to-move
+  - Arrow-key nudge (1px; Shift for 10px)
+  - Properties panel bound to x/y/w/h/rotation
+  - Store-managed image layers; export/import uses layers
+  - Debounced autosave + revisions dropdown (last 10) with restore
+- CI: Fix pnpm setup ordering in Web CI workflow (set up pnpm before setup-node; defer version to packageManager)
+- PR #17 opened: Multi-select + group/ungroup scaffold (Transformer across multiple nodes; keyboard group/ungroup; Layers panel buttons)
+
 ### 2025-10-30
 - Phase 1 shell merged (PR #4)
 ### 2025-10-30

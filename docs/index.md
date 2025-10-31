@@ -1,6 +1,6 @@
 # AI Image Editor Overview
 
-Welcome to the public project page for the AI-powered image editor. This site summarizes the vision, roadmap, and setup guidance surfaced during Phase 0 of development.
+Welcome to the public project page for the AI-powered image editor. This site summarizes the vision, roadmap, and setup guidance. Phase 1 shell is now active with an interactive canvas and core tooling.
 
 ## Project Vision
 
@@ -16,11 +16,17 @@ See the full plan in [`ai-image-editor-plan.md`](../ai-image-editor-plan.md) for
 
 ## Current Status
 
-- ✅ Monorepo scaffold with Next.js App Router (`apps/web`) and Convex backend stub (`convex/`).
-- ✅ Phase 0 editor shell with AI prompt/asset panels and undo/redo state powered by Zustand.
-- ✅ Clerk authentication wired through middleware, sign-in/up routes, and session-aware UI.
-- ✅ UploadThing route live via `/api/uploadthing` with SSR hydration and Convex upload logging (supply UploadThing token + Convex URL).
-- 📌 Pending: Convex function implementation, AI provider integration, and production hardening.
+- ✅ Monorepo with Next.js App Router (`apps/web`) + Convex backend scaffold
+- ✅ Phase 1 shell: Konva canvas with pan/zoom, selection, resize/rotate via Transformer
+- ✅ Layers: add/remove, show/hide, drag-and-drop reorder + keyboard shortcuts
+- ✅ Properties: numeric x/y/w/h/rotation bound to selection
+- ✅ Tools: Brush/Eraser with size and color
+- ✅ Assets: thumbnails (uploads/AI previews) with insert-to-canvas
+- ✅ AI UI: parameters + mocked generation; previews grid
+- ✅ Autosave: debounced; local revisions (last 10) with restore UI
+- ✅ Testing & CI: Vitest unit tests, Playwright smoke e2e, GitHub Actions Web CI
+- 🚧 In flight: multi-select + group/ungroup scaffold (PR #17)
+- 📌 Next: snap-to-angles, Convex-backed revisions (env-gated), upload thumbnails, real AI providers
 
 More details live inside [`docs/phase-0-status.md`](phase-0-status.md).
 
@@ -46,7 +52,7 @@ Consult [`docs/clerk-production-checklist.md`](clerk-production-checklist.md) be
 | Phase | Focus | Highlights |
 | --- | --- | --- |
 | Phase 0 | Foundations | Repository scaffold, auth wiring, mocked AI surface, UploadThing SSR bridge + Convex logging, documentation |
-| Phase 1 | AI Generation | Integrate Gemini & OpenAI generation calls, job tracking, gallery |
+| Phase 1 | Interactive Editor + mocked AI | Konva canvas, layers/properties, autosave + local revisions, AI previews |
 | Phase 2 | AI Editing | Masking tools, inpainting, streaming previews, prompt revision surfacing |
 | Phase 3 | Collaboration | Presence, commenting, activity feeds, Convex workflows |
 | Phase 4 | Production polish | Accessibility, telemetry, performance tuning, deployment automation |

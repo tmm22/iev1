@@ -5,6 +5,7 @@ import { useEditorStore } from "@/lib/state/editorStore";
 export function PropertiesPanel() {
   const activeTool = useEditorStore((s) => s.activeTool);
   const selectedLayerId = useEditorStore((s) => s.selectedLayerId);
+  const selectedLayerIds = useEditorStore((s) => (s as any).selectedLayerIds as string[]);
   const layer = useEditorStore((s) =>
     s.layers.find((l) => l.id === s.selectedLayerId) ?? null
   );
@@ -55,7 +56,9 @@ export function PropertiesPanel() {
       {/* Layer properties */}
       <div className="flex flex-col gap-2">
         <h3 className="text-xs font-semibold text-slate-300">Layer</h3>
-        {!selectedLayerId || !layer ? (
+        {selectedLayerIds && selectedLayerIds.length > 1 ? (
+          <p className="text-xs text-slate-500">{selectedLayerIds.length} layers selected.</p>
+        ) : !selectedLayerId || !layer ? (
           <p className="text-xs text-slate-500">No layer selected.</p>
         ) : (
           <div className="flex flex-col gap-3">
