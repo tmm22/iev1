@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Stage, Layer, Line, Image as KonvaImage } from "react-konva";
+import { Stage, Layer, Line, Image as KonvaImage, Transformer } from "react-konva";
 import type Konva from "konva";
 import { useEditorStore } from "@/lib/state/editorStore";
 
@@ -21,13 +21,18 @@ export function CanvasKonva() {
   const [spaceDown, setSpaceDown] = useState(false);
   const [isDrawing, setIsDrawing] = useState(false);
   const [lines, setLines] = useState<DrawLine[]>([]);
-  const [images, setImages] = useState<Array<{ id: string; url: string; el: HTMLImageElement; x: number; y: number }>>([]);
+  const [imageEls, setImageEls] = useState<Record<string, { el: HTMLImageElement; url: string }>>({});
 
   const activeTool = useEditorStore((s) => s.activeTool);
   const brushSize = useEditorStore((s) => s.toolProps.brushSize);
   const primaryColor = useEditorStore((s) => s.toolProps.primaryColor);
   const pendingUrl = useEditorStore((s) => s.pendingInsertAssetUrl);
   const clearPending = useEditorStore((s) => (s as any).clearPendingInsert as () => void);
+  const addLayer = useEditorStore((s) => s.addLayer);
+  const layers = useEditorStore((s) => s.layers);
+  const setLayerTransform = useEditorStore((s) => (s as any).setLayerTransform as (id: string, patch: any) => void);
+  const selectLayer = useEditorStore((s) => s.selectLayer);
+  const selectedLayerId = useEditorStore((s) => s.selectedLayerId);
 
   // Fit to container
   useEffect(() => {
@@ -88,10 +93,34 @@ export function CanvasKonva() {
     const img = new window.Image();
     img.crossOrigin = "anonymous";
     img.onload = () => {
-      setImages((prev) => [
-        ...prev,
-        { id: `${Date.now()}-${Math.random()}`, url: pendingUrl, el: img, x: size.width / 2 - img.width / 4, y: size.height / 2 - img.height / 4 }
-      ]);
+      const id = `${Date.now()}-${Math.random()}`;
+      setImageEls((prev) => ({ ...prev, [id]: { el: img, url: pendingUrl } }));
+      // create a matching layer entry with initial transform
+      const x = size.width / 2 - img.width / 4;
+      const y = size.height / 2 - img.height / 4;
+      (addLayer as any)();
+      // set the last added layer to image kind and transforms
+      const last = (useEditorStore.getState().layers ?? []).slice(-1)[0];
+      if (last) {
+        useEditorStore.setState({
+          layers: useEditorStore.getState().layers.map((l) =>
+            l.id === last.id
+              ? {
+                  ...l,
+                  kind: "image",
+                  imageUrl: pendingUrl,
+                  x,
+                  y,
+                  width: img.width,
+                  height: img.height,
+                  rotation: 0
+                }
+              : l
+          ),
+          selectedLayerId: last.id
+        });
+        window.dispatchEvent(new Event("canvas:changed"));
+      }
       clearPending();
     };
     img.onerror = () => clearPending();
@@ -153,7 +182,12 @@ export function CanvasKonva() {
     });
   };
 
-  const endDraw = () => setIsDrawing(false);
+  const endDraw = () => {
+    if (isDrawing) {
+      setIsDrawing(false);
+      window.dispatchEvent(new Event("canvas:changed"));
+    }
+  };
 
   // Export/import snapshot via window events
   useEffect(() => {
@@ -164,7 +198,9 @@ export function CanvasKonva() {
         scale,
         position,
         lines,
-        images: images.map(({ url, x, y }) => ({ url, x, y }))
+        images: (layers || [])
+          .filter((l: any) => l.kind === "image" && l.imageUrl)
+          .map((l: any) => ({ url: l.imageUrl!, x: l.x ?? 0, y: l.y ?? 0, width: l.width, height: l.height, rotation: l.rotation ?? 0 }))
       };
       window.dispatchEvent(new CustomEvent("canvas:export", { detail: snapshot }));
     };
@@ -173,14 +209,35 @@ export function CanvasKonva() {
       setScale(snap.scale ?? 1);
       setPosition(snap.position ?? { x: 0, y: 0 });
       setLines(Array.isArray(snap.lines) ? snap.lines : []);
-      const imgs: Array<{ id: string; url: string; el: HTMLImageElement; x: number; y: number }> = [];
-      (snap.images ?? []).forEach((it: any) => {
+      // import images into layers and load elements
+      const incoming = Array.isArray(snap.images) ? snap.images : [];
+      incoming.forEach((it: any) => {
         const img = new window.Image();
         img.crossOrigin = "anonymous";
-        img.onload = () => setImages((prev) => [...prev, { id: `${Date.now()}-${Math.random()}`, url: it.url, el: img, x: it.x, y: it.y }]);
+        img.onload = () => {
+          const id = `${Date.now()}-${Math.random()}`;
+          setImageEls((prev) => ({ ...prev, [id]: { el: img, url: it.url } }));
+          useEditorStore.setState((st) => ({
+            layers: [
+              ...st.layers,
+              {
+                id,
+                name: `Image ${st.layers.length + 1}`,
+                visible: true,
+                opacity: 1,
+                kind: "image",
+                imageUrl: it.url,
+                x: it.x ?? 0,
+                y: it.y ?? 0,
+                width: img.width,
+                height: img.height,
+                rotation: it.rotation ?? 0
+              }
+            ]
+          }));
+        };
         img.src = it.url;
       });
-      setImages(imgs);
     };
     window.addEventListener("canvas:requestExport", onRequest);
     window.addEventListener("canvas:import", onImport as any);
@@ -188,7 +245,7 @@ export function CanvasKonva() {
       window.removeEventListener("canvas:requestExport", onRequest);
       window.removeEventListener("canvas:import", onImport as any);
     };
-  }, [size, scale, position, lines, images]);
+  }, [size, scale, position, lines, layers]);
 
   return (
     <div ref={containerRef} className="relative flex h-full w-full select-none items-stretch justify-stretch">
@@ -228,15 +285,68 @@ export function CanvasKonva() {
               globalCompositeOperation={l.tool === "eraser" ? ("destination-out" as any) : undefined}
             />
           ))}
-          {images.map((it) => (
-            <KonvaImage key={it.id} image={it.el} x={it.x} y={it.y} draggable />
-          ))}
+          {layers
+            .filter((l: any) => l.kind === "image" && l.imageUrl && imageEls[l.id])
+            .map((l: any) => (
+              <KonvaImage
+                key={l.id}
+                id={l.id}
+                image={imageEls[l.id].el}
+                x={l.x ?? 0}
+                y={l.y ?? 0}
+                width={l.width}
+                height={l.height}
+                rotation={l.rotation ?? 0}
+                draggable
+                onClick={(e) => {
+                  selectLayer(l.id);
+                  const node = e.target.getStage()?.findOne(`#${l.id}`);
+                  if (node) node.getStage()?.batchDraw();
+                  window.dispatchEvent(new CustomEvent("canvas:selection", { detail: { id: l.id, ...l } }));
+                }}
+                onDragEnd={(e) => {
+                  const pos = e.target.position();
+                  setLayerTransform(l.id, { x: pos.x, y: pos.y });
+                  window.dispatchEvent(new Event("canvas:changed"));
+                  window.dispatchEvent(new CustomEvent("canvas:selection", { detail: { id: l.id, ...l, x: pos.x, y: pos.y } }));
+                }}
+                onTransformEnd={(e) => {
+                  const node = e.target as any;
+                  const width = Math.max(1, node.width() * node.scaleX());
+                  const height = Math.max(1, node.height() * node.scaleY());
+                  const rotation = node.rotation();
+                  node.scaleX(1);
+                  node.scaleY(1);
+                  setLayerTransform(l.id, { width, height, rotation });
+                  window.dispatchEvent(new Event("canvas:changed"));
+                  window.dispatchEvent(new CustomEvent("canvas:selection", { detail: { id: l.id, ...l, width, height, rotation } }));
+                }}
+                onTap={() => selectLayer(l.id)}
+              />
+            ))}
+          {selectedLayerId ? (
+            <Transformer
+              nodes={(() => {
+                const stage = stageRef.current;
+                if (!stage) return [] as any[];
+                const node = stage.findOne(`#${selectedLayerId}`);
+                return node ? [node] : [];
+              })()}
+              rotateEnabled
+              enabledAnchors={["top-left", "top-right", "bottom-left", "bottom-right"]}
+              boundBoxFunc={(oldBox, newBox) => {
+                // prevent resize too small
+                if (newBox.width < 10 || newBox.height < 10) return oldBox;
+                return newBox;
+              }}
+            />
+          ) : null}
         </Layer>
       </Stage>
 
       {/* HUD */}
       <div className="pointer-events-none absolute bottom-3 left-3 rounded-md border border-slate-800 bg-slate-900/80 px-2 py-1 text-[11px] text-slate-300">
-        {spaceDown ? "Pan (Space)" : activeTool === "brush" ? "Brush" : activeTool === "eraser" ? "Eraser" : "Navigate"}
+        {spaceDown ? "Pan (Space)" : activeTool === "brush" ? "Brush" : activeTool === "eraser" ? "Eraser" : selectedLayerId ? "Select" : "Navigate"}
         {"  ·  "}Zoom: wheel  ·  Brush size: {brushSize}
       </div>
     </div>
